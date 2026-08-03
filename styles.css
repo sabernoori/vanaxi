@@ -1,0 +1,189 @@
+/* ==========================================================================
+   Vanaxi CDN overrides — mobile menu (compare with current-styles.css)
+   ========================================================================== */
+
+@media screen and (max-width: 991px) {
+  /*
+   * CHANGE vs current-styles.css (.menu_wrapper):
+   * Main: display: none (line ~595–602).
+   * Added opacity, visibility, and transform transitions for a gentle reveal.
+   * display is toggled none ↔ flex via script.js; CSS handles the fade/slide.
+   */
+  .menu_wrapper {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-0.5rem);
+    transition:
+      opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+      visibility 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .menu_wrapper.is-open,
+  .menu_wrapper.is-closing-from-layer {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  /*
+   * CHANGE vs current-styles.css (.menu_wrapper fade-out while closing):
+   * Main: no closing-from-layer state.
+   * When closing from a sub-layer, fade the wrapper without revealing the main layer.
+   */
+  .menu_wrapper.is-closing-from-layer:not(.is-open) {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  /*
+   * CHANGE vs current-styles.css (.menu_list):
+   * Main: width 100vw, display flex, no absolute positioning (line ~604–609).
+   * Shared layer positioning for slide panels inside the open menu.
+   */
+  .menu_wrapper.is-open > .menu_list,
+  .menu_wrapper.is-closing-from-layer > .menu_list {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    min-width: 100%;
+    will-change: transform;
+  }
+
+  /*
+   * CHANGE vs current-styles.css (.menu_list.is-main):
+   * Main: position relative, justify-content space-between (line ~611–614).
+   * Main layer stays in view at translate(0) until a sub-layer opens.
+   */
+  .menu_wrapper.is-open > .menu_list.is-main,
+  .menu_wrapper.is-closing-from-layer > .menu_list.is-main {
+    z-index: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+  /*
+   * CHANGE vs current-styles.css (.menu_list.is-services / .menu_list.is-about):
+   * Main: display none, position relative (line ~687–690).
+   * Sub-layers are display flex and initialized off-screen to the right (100%).
+   * transition is off until .is-animating-layers so they do not slide on menu open.
+   */
+  .menu_wrapper.is-open > .menu_list.is-services,
+  .menu_wrapper.is-open > .menu_list.is-about,
+  .menu_wrapper.is-closing-from-layer > .menu_list.is-services,
+  .menu_wrapper.is-closing-from-layer > .menu_list.is-about {
+    display: flex;
+    z-index: 2;
+    transform: translate3d(100%, 0, 0);
+    transition: none;
+  }
+
+  /*
+   * CHANGE vs current-styles.css (.menu_list layer slide):
+   * Main: no layer-slide behavior.
+   * Layer transitions run only after the user opens or closes a sub-menu.
+   */
+  .menu_wrapper.is-open.is-animating-layers > .menu_list.is-main,
+  .menu_wrapper.is-open.is-animating-layers > .menu_list.is-services,
+  .menu_wrapper.is-open.is-animating-layers > .menu_list.is-about {
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .menu_wrapper.is-open.is-animating-layers.is-layer-services > .menu_list.is-main {
+    transform: translate3d(-100%, 0, 0);
+    pointer-events: none;
+  }
+
+  .menu_wrapper.is-open.is-animating-layers.is-layer-services > .menu_list.is-services {
+    transform: translate3d(0, 0, 0);
+    pointer-events: auto;
+  }
+
+  .menu_wrapper.is-open:not(.is-layer-services) > .menu_list.is-services,
+  .menu_wrapper.is-open:not(.is-layer-about) > .menu_list.is-about {
+    pointer-events: none;
+  }
+
+  /*
+   * CHANGE vs current-styles.css (.menu_list.is-main during sub-layer close):
+   * Main: always visible when menu is open.
+   * Main layer is hidden while closing from a sub-layer so only that layer fades out.
+   */
+  .menu_wrapper.is-closing-from-layer.is-layer-services > .menu_list.is-main,
+  .menu_wrapper.is-closing-from-layer.is-layer-about > .menu_list.is-main {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .menu_wrapper.is-closing-from-layer.is-layer-services > .menu_list.is-services,
+  .menu_wrapper.is-closing-from-layer.is-layer-about > .menu_list.is-about {
+    transform: translate3d(0, 0, 0);
+    pointer-events: none;
+  }
+
+  /*
+   * CHANGE vs current-styles.css (.menu_close-row):
+   * Main: layout/sticky styles only (line ~622–632).
+   * Added pointer cursor and a subtle press feedback on the close icon.
+   */
+  .menu_close-row {
+    cursor: pointer;
+  }
+
+  .menu_close-row .icon-32 {
+    cursor: pointer;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+
+  .menu_close-row:hover .icon-32 {
+    opacity: 0.75;
+  }
+
+  .menu_close-row:active .icon-32 {
+    transform: scale(0.92);
+  }
+
+  /*
+   * CHANGE vs current-styles.css (.menu_item.has-padding):
+   * Main: padding/layout only (line ~663–667).
+   * Added pointer cursor for tappable main-menu rows.
+   */
+  .menu_first-list .menu_item.has-padding {
+    cursor: pointer;
+  }
+
+  /*
+   * CHANGE vs current-styles.css (.menu_top-row [icon-action]):
+   * Main: layout only (line ~692–703).
+   * Added pointer cursor for back/close controls in sub-layers.
+   */
+  .menu_top-row [icon-action] {
+    cursor: pointer;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+
+  .menu_top-row [icon-action]:hover {
+    opacity: 0.8;
+  }
+
+  .menu_top-row [icon-action]:active {
+    transform: scale(0.92);
+  }
+
+  /*
+   * CHANGE vs current-styles.css (.burger-icon):
+   * Main: sizing/layout only (line ~201–208).
+   * Added pointer cursor for the mobile menu trigger.
+   */
+  .burger-icon {
+    cursor: pointer;
+  }
+}
+
+/*
+ * CHANGE: new rule — prevents background scroll while the mobile menu is open.
+ * Not present in current-styles.css.
+ */
+body.menu-open {
+  overflow: hidden;
+}
