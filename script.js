@@ -555,7 +555,44 @@
     }
 
     setupEventListeners();
+    setupSectionDetection();
     console.log('Menu: Initialized successfully');
+  }
+
+  /**
+   * Detect when user is in services section on mobile
+   */
+  function setupSectionDetection() {
+    const navbar = document.querySelector('.navbar');
+    const servicesSection = document.getElementById('section_services');
+
+    if (!navbar || !servicesSection) return;
+
+    // Use Intersection Observer to detect when services section is in view
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (window.innerWidth <= 991) {
+          if (entry.isIntersecting) {
+            navbar.classList.add('is-services-section');
+          } else {
+            navbar.classList.remove('is-services-section');
+          }
+        } else {
+          navbar.classList.remove('is-services-section');
+        }
+      });
+    }, {
+      threshold: 0.3
+    });
+
+    observer.observe(servicesSection);
+
+    // Handle resize
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 991) {
+        navbar.classList.remove('is-services-section');
+      }
+    });
   }
 
   // Initialize when DOM is ready

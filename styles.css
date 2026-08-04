@@ -8,6 +8,32 @@
   --transition-fast: 0.3s var(--ease-in-out-quint);
 }
 
+/* Navbar hide on scroll - mobile only */
+.navbar {
+  transition: transform 0.3s var(--ease-in-out-quint),
+              opacity 0.3s var(--ease-in-out-quint);
+}
+
+.navbar.is-services-section {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Navbar - fixed on desktop, absolute on mobile when in services section */
+.navbar {
+  position: fixed;
+  width: 100%;
+  left: 0;
+  right: 0;
+}
+
+@media screen and (max-width: 991px) {
+  .navbar.is-services-section {
+    position: absolute;
+  }
+}
+
 /* Nav wrapper - ensure it's above menu wrapper */
 .nav_wrapper {
   position: relative;
