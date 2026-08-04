@@ -580,4 +580,8 @@
 
 /**
  * End of Menu Toggle Animation Controller
+<<<<<<< HEAD
  */
+=======
+ */
+>>>>>>> 7cf41ace690dbc682cd3cb13da93bac90c3c886e
