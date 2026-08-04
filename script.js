@@ -555,42 +555,46 @@
     }
 
     setupEventListeners();
-    setupSectionDetection();
+    setupScrollHide();
     console.log('Menu: Initialized successfully');
   }
 
   /**
-   * Detect when user is in services section on mobile
+   * Setup scroll-based navbar hide/show
    */
-  function setupSectionDetection() {
+  function setupScrollHide() {
     const navbar = document.querySelector('.navbar');
-    const servicesSection = document.querySelector('.section-services');
+    if (!navbar) return;
 
-    if (!navbar || !servicesSection) return;
+    let lastScrollTop = 0;
+    let scrollThreshold = 50; // Minimum scroll amount to trigger hide/show
 
-    // Use Intersection Observer to detect when services section is in view
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (window.innerWidth <= 991) {
-          if (entry.isIntersecting) {
-            navbar.classList.add('is-services-section');
-          } else {
-            navbar.classList.remove('is-services-section');
-          }
-        } else {
-          navbar.classList.remove('is-services-section');
+    window.addEventListener('scroll', () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const scrollDelta = scrollTop - lastScrollTop;
+
+      // Only hide/show on mobile
+      if (window.innerWidth <= 991) {
+        // Scrolling down and past the threshold
+        if (scrollDelta > scrollThreshold && scrollTop > 100) {
+          navbar.classList.add('is-hidden');
         }
-      });
-    }, {
-      threshold: 0.3
-    });
+        // Scrolling up
+        else if (scrollDelta < -scrollThreshold) {
+          navbar.classList.remove('is-hidden');
+        }
+      } else {
+        // On desktop, always show navbar
+        navbar.classList.remove('is-hidden');
+      }
 
-    observer.observe(servicesSection);
+      lastScrollTop = scrollTop;
+    }, { passive: true });
 
     // Handle resize
     window.addEventListener('resize', () => {
       if (window.innerWidth > 991) {
-        navbar.classList.remove('is-services-section');
+        navbar.classList.remove('is-hidden');
       }
     });
   }

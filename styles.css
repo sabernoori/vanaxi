@@ -10,13 +10,11 @@
 
 /* Navbar hide on scroll - mobile only */
 .navbar {
-  transition: transform 0.3s var(--ease-in-out-quint),
-              opacity 0.3s var(--ease-in-out-quint);
+  transition: transform 0.3s var(--ease-in-out-quint);
 }
 
-.navbar.is-services-section {
+.navbar.is-hidden {
   transform: translateY(-100%);
-  opacity: 0;
   pointer-events: none;
 }
 
