@@ -564,7 +564,7 @@
    */
   function setupSectionDetection() {
     const navbar = document.querySelector('.navbar');
-    const servicesSection = document.getElementById('section_services');
+    const servicesSection = document.querySelector('.section-services');
 
     if (!navbar || !servicesSection) return;
 
