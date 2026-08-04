@@ -1,5 +1,5 @@
 /**
- * Menu Toggle Animation Controller
+ * Start Menu Toggle Animation Controller
  * Handles mobile menu open/close with smooth animations
  */
 
@@ -576,3 +576,8 @@
   };
 
 })();
+
+
+/**
+ * End of Menu Toggle Animation Controller
+ */
