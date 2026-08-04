@@ -1,189 +1,339 @@
-/* ==========================================================================
-   Vanaxi CDN overrides — mobile menu (compare with current-styles.css)
-   ========================================================================== */
-
-@media screen and (max-width: 991px) {
-  /*
-   * CHANGE vs current-styles.css (.menu_wrapper):
-   * Main: display: none (line ~595–602).
-   * Added opacity, visibility, and transform transitions for a gentle reveal.
-   * display is toggled none ↔ flex via script.js; CSS handles the fade/slide.
-   */
-  .menu_wrapper {
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-0.5rem);
-    transition:
-      opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-      visibility 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-      transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .menu_wrapper.is-open,
-  .menu_wrapper.is-closing-from-layer {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-  }
-
-  /*
-   * CHANGE vs current-styles.css (.menu_wrapper fade-out while closing):
-   * Main: no closing-from-layer state.
-   * When closing from a sub-layer, fade the wrapper without revealing the main layer.
-   */
-  .menu_wrapper.is-closing-from-layer:not(.is-open) {
-    opacity: 0;
-    visibility: hidden;
-  }
-
-  /*
-   * CHANGE vs current-styles.css (.menu_list):
-   * Main: width 100vw, display flex, no absolute positioning (line ~604–609).
-   * Shared layer positioning for slide panels inside the open menu.
-   */
-  .menu_wrapper.is-open > .menu_list,
-  .menu_wrapper.is-closing-from-layer > .menu_list {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    min-width: 100%;
-    will-change: transform;
-  }
-
-  /*
-   * CHANGE vs current-styles.css (.menu_list.is-main):
-   * Main: position relative, justify-content space-between (line ~611–614).
-   * Main layer stays in view at translate(0) until a sub-layer opens.
-   */
-  .menu_wrapper.is-open > .menu_list.is-main,
-  .menu_wrapper.is-closing-from-layer > .menu_list.is-main {
-    z-index: 1;
-    transform: translate3d(0, 0, 0);
-  }
-
-  /*
-   * CHANGE vs current-styles.css (.menu_list.is-services / .menu_list.is-about):
-   * Main: display none, position relative (line ~687–690).
-   * Sub-layers are display flex and initialized off-screen to the right (100%).
-   * transition is off until .is-animating-layers so they do not slide on menu open.
-   */
-  .menu_wrapper.is-open > .menu_list.is-services,
-  .menu_wrapper.is-open > .menu_list.is-about,
-  .menu_wrapper.is-closing-from-layer > .menu_list.is-services,
-  .menu_wrapper.is-closing-from-layer > .menu_list.is-about {
-    display: flex;
-    z-index: 2;
-    transform: translate3d(100%, 0, 0);
-    transition: none;
-  }
-
-  /*
-   * CHANGE vs current-styles.css (.menu_list layer slide):
-   * Main: no layer-slide behavior.
-   * Layer transitions run only after the user opens or closes a sub-menu.
-   */
-  .menu_wrapper.is-open.is-animating-layers > .menu_list.is-main,
-  .menu_wrapper.is-open.is-animating-layers > .menu_list.is-services,
-  .menu_wrapper.is-open.is-animating-layers > .menu_list.is-about {
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .menu_wrapper.is-open.is-animating-layers.is-layer-services > .menu_list.is-main {
-    transform: translate3d(-100%, 0, 0);
-    pointer-events: none;
-  }
-
-  .menu_wrapper.is-open.is-animating-layers.is-layer-services > .menu_list.is-services {
-    transform: translate3d(0, 0, 0);
-    pointer-events: auto;
-  }
-
-  .menu_wrapper.is-open:not(.is-layer-services) > .menu_list.is-services,
-  .menu_wrapper.is-open:not(.is-layer-about) > .menu_list.is-about {
-    pointer-events: none;
-  }
-
-  /*
-   * CHANGE vs current-styles.css (.menu_list.is-main during sub-layer close):
-   * Main: always visible when menu is open.
-   * Main layer is hidden while closing from a sub-layer so only that layer fades out.
-   */
-  .menu_wrapper.is-closing-from-layer.is-layer-services > .menu_list.is-main,
-  .menu_wrapper.is-closing-from-layer.is-layer-about > .menu_list.is-main {
-    visibility: hidden;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .menu_wrapper.is-closing-from-layer.is-layer-services > .menu_list.is-services,
-  .menu_wrapper.is-closing-from-layer.is-layer-about > .menu_list.is-about {
-    transform: translate3d(0, 0, 0);
-    pointer-events: none;
-  }
-
-  /*
-   * CHANGE vs current-styles.css (.menu_close-row):
-   * Main: layout/sticky styles only (line ~622–632).
-   * Added pointer cursor and a subtle press feedback on the close icon.
-   */
-  .menu_close-row {
-    cursor: pointer;
-  }
-
-  .menu_close-row .icon-32 {
-    cursor: pointer;
-    transition: transform 0.2s ease, opacity 0.2s ease;
-  }
-
-  .menu_close-row:hover .icon-32 {
-    opacity: 0.75;
-  }
-
-  .menu_close-row:active .icon-32 {
-    transform: scale(0.92);
-  }
-
-  /*
-   * CHANGE vs current-styles.css (.menu_item.has-padding):
-   * Main: padding/layout only (line ~663–667).
-   * Added pointer cursor for tappable main-menu rows.
-   */
-  .menu_first-list .menu_item.has-padding {
-    cursor: pointer;
-  }
-
-  /*
-   * CHANGE vs current-styles.css (.menu_top-row [icon-action]):
-   * Main: layout only (line ~692–703).
-   * Added pointer cursor for back/close controls in sub-layers.
-   */
-  .menu_top-row [icon-action] {
-    cursor: pointer;
-    transition: transform 0.2s ease, opacity 0.2s ease;
-  }
-
-  .menu_top-row [icon-action]:hover {
-    opacity: 0.8;
-  }
-
-  .menu_top-row [icon-action]:active {
-    transform: scale(0.92);
-  }
-
-  /*
-   * CHANGE vs current-styles.css (.burger-icon):
-   * Main: sizing/layout only (line ~201–208).
-   * Added pointer cursor for the mobile menu trigger.
-   */
-  .burger-icon {
-    cursor: pointer;
-  }
-}
-
-/*
- * CHANGE: new rule — prevents background scroll while the mobile menu is open.
- * Not present in current-styles.css.
- */
-body.menu-open {
-  overflow: hidden;
-}
+/* Custom easing functions */
+:root {
+  --ease-in-out-quint: cubic-bezier(0.83, 0, 0.17, 1);
+  --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-base: 0.4s var(--ease-in-out-quint);
+  --transition-fast: 0.3s var(--ease-in-out-quint);
+}
+
+/* Nav wrapper - ensure it's above menu wrapper */
+.nav_wrapper {
+  position: relative;
+  z-index: 10;
+}
+
+/* Menu wrapper animation */
+.menu_open-wrapper {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-20px);
+  transition: opacity var(--transition-base),
+              visibility var(--transition-base),
+              transform var(--transition-base);
+  z-index: 1;
+  display: flex;
+}
+
+.menu_open-wrapper.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.menu_open-wrapper.is-open .menu_open-box {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Menu box animation */
+.menu_open-box {
+  opacity: 0;
+  transform: translateY(30px) scale(0.95);
+  transition: opacity 0.5s var(--ease-in-out-quint) 0.1s,
+              transform 0.5s var(--ease-in-out-quint) 0.1s;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Menu items staggered animation */
+.menu_first-list .menu_item {
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.4s var(--ease-in-out-quint),
+              transform 0.4s var(--ease-in-out-quint);
+}
+
+.menu_open-wrapper.is-open .menu_first-list .menu_item:nth-child(1) {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: 0.2s;
+}
+
+.menu_open-wrapper.is-open .menu_first-list .menu_item:nth-child(2) {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: 0.3s;
+}
+
+.menu_open-wrapper.is-open .menu_first-list .menu_item:nth-child(3) {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: 0.4s;
+}
+
+.menu_open-wrapper.is-open .menu_first-list .menu_item:nth-child(4) {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: 0.5s;
+}
+
+/* Button group animation */
+.menu_btn-group {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s var(--ease-in-out-quint),
+              transform 0.5s var(--ease-in-out-quint);
+}
+
+.menu_open-wrapper.is-open .menu_btn-group {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.6s;
+}
+
+/* Burger icon animation */
+.nav_burger {
+  position: relative;
+  z-index: 100;
+}
+
+.burger-icon,
+.back-icon,
+.close-icon.is-step1 {
+  position: absolute;
+  transition: opacity var(--transition-fast),
+              transform var(--transition-fast);
+  z-index: 101;
+}
+
+.burger-icon.is-hidden {
+  opacity: 0;
+  transform: scale(0.8) rotate(90deg);
+  pointer-events: none;
+}
+
+.nav_burger.is-menu-open .burger-icon {
+  opacity: 0;
+  transform: scale(0.8) rotate(90deg);
+  pointer-events: none;
+}
+
+.nav_burger.is-menu-open .close-icon.is-step1 {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+  display: flex !important;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* Close icon animation - override display:none from current-styles.css */
+.close-icon.is-step1 {
+  opacity: 0;
+  transform: scale(0.8) rotate(-90deg);
+  pointer-events: none;
+  display: flex !important;
+  cursor: pointer;
+}
+
+.close-icon.is-step1.is-visible {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+  pointer-events: auto;
+  display: flex !important;
+  cursor: pointer;
+}
+
+.nav_burger.is-menu-open .close-icon.is-step1 {
+  cursor: pointer;
+}
+
+/* Back icon animation - override display:none from current-styles.css */
+.back-icon {
+  opacity: 0;
+  transform: scale(0.8) rotate(-90deg);
+  pointer-events: none;
+  display: flex !important;
+}
+
+.back-icon.is-visible {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+  pointer-events: auto;
+  display: flex !important;
+}
+
+/* Sub-menu animations - fade in/out */
+.menu_open.is-services,
+.menu_open.is-about {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.35s var(--ease-in-out-quint);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.menu_open.is-services.is-active,
+.menu_open.is-about.is-active {
+  display: flex;
+  opacity: 1;
+}
+
+/* Main menu - fade out when submenu is open */
+.menu_open.is-main {
+  transition: opacity 0.25s var(--ease-in-out-quint);
+  position: relative;
+}
+
+.menu_open.is-main.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Nav logo and title animations - no conflict */
+.nav_logo-link-center {
+  transition: opacity 0.2s var(--ease-in-out-quint),
+              transform 0.2s var(--ease-in-out-quint);
+  position: absolute;
+}
+
+.nav_logo-link-center.is-hidden {
+  opacity: 0;
+  transform: scale(0.9);
+  pointer-events: none;
+}
+
+/* Menu title - override display:none from current-styles.css */
+.menu_title {
+  transition: opacity 0.2s var(--ease-in-out-quint),
+              transform 0.2s var(--ease-in-out-quint);
+  position: absolute;
+  display: block !important;
+}
+
+.menu_title.is-services,
+.menu_title.is-about {
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+}
+
+.menu_title.is-services.is-visible,
+.menu_title.is-about.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Nav account-mob icon animations */
+.nav_account-mob {
+  position: relative;
+}
+
+.nav_account-mob .icon-24 {
+  transition: opacity 0.3s var(--ease-in-out-quint),
+              transform 0.3s var(--ease-in-out-quint);
+}
+
+.nav_account-mob .icon-24.is-hidden {
+  opacity: 0;
+  transform: scale(0.8) rotate(90deg);
+  pointer-events: none;
+}
+
+.nav_account-mob .close-icon[icon-action="close-layers"] {
+  transition: opacity 0.3s var(--ease-in-out-quint),
+              transform 0.3s var(--ease-in-out-quint);
+  opacity: 0;
+  transform: scale(0.8) rotate(-90deg);
+  pointer-events: none;
+  position: absolute;
+  cursor: pointer;
+  display: flex !important;
+}
+
+.nav_account-mob .close-icon[icon-action="close-layers"].is-visible {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+  pointer-events: auto;
+  cursor: pointer;
+  display: flex !important;
+}
+
+/* Close layers icon in nav_burger - hide when submenu is open */
+.nav_burger.is-submenu-open [icon-action="close-main"] {
+  opacity: 0;
+  transform: scale(0.8) rotate(90deg);
+  pointer-events: none;
+}
+
+.nav_burger.is-submenu-open [icon-action="back"] {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+  pointer-events: auto;
+}
+
+/* Menu item hover effect */
+.menu_item {
+  transition: background-color 0.2s ease,
+              padding-left 0.2s ease;
+}
+
+.menu_item:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Button hover effects */
+.button {
+  transition: transform 0.2s var(--ease-out-back),
+              box-shadow 0.2s ease;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.button:active {
+  transform: translateY(0);
+}
+
+/* Services cards staggered animation */
+.nav_services-card {
+  opacity: 0;
+  transform: translateY(15px);
+  transition: opacity 0.4s var(--ease-in-out-quint),
+              transform 0.4s var(--ease-in-out-quint);
+}
+
+.menu_open.is-services.is-active .nav_services-card:nth-child(1),
+.menu_open.is-about.is-active .nav_services-card:nth-child(1) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.1s;
+}
+
+.menu_open.is-services.is-active .nav_services-card:nth-child(2),
+.menu_open.is-about.is-active .nav_services-card:nth-child(2) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.2s;
+}
+
+.menu_open.is-services.is-active .nav_services-card:nth-child(3),
+.menu_open.is-about.is-active .nav_services-card:nth-child(3) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.3s;
+}
+
+.menu_open.is-services.is-active .nav_services-card:nth-child(4),
+.menu_open.is-about.is-active .nav_services-card:nth-child(4) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.4s;
+}
