@@ -180,30 +180,24 @@
 
     MenuState.currentSubMenu = subMenuType;
 
-    // Hide main menu with fade
-    elements.mainMenu.classList.add('is-hidden');
-
-    // Toggle nav_burger icons using attribute selectors
+    // Toggle icons and title first
     toggleNavBurgerIcons(true);
-
-    // Toggle nav_account-mob icons
     toggleNavAccountIcons(true);
-
-    // Toggle logo and title - logo hides immediately, title shows with delay
     toggleLogoAndTitle(subMenuType, true);
 
-    // Show the appropriate sub-menu (let CSS handle display)
-    if (subMenuType === 'services' && elements.servicesMenu) {
-      elements.servicesMenu.classList.add('is-active');
+    // Hide main menu (CSS handles fade out)
+    elements.mainMenu.classList.add('is-hidden');
 
-      // Animate items
-      animateSubMenuItems(elements.servicesMenu);
-    } else if (subMenuType === 'about' && elements.aboutMenu) {
-      elements.aboutMenu.classList.add('is-active');
-
-      // Animate items
-      animateSubMenuItems(elements.aboutMenu);
-    }
+    // Show the appropriate sub-menu after a brief delay
+    setTimeout(() => {
+      if (subMenuType === 'services' && elements.servicesMenu) {
+        elements.servicesMenu.classList.add('is-active');
+        animateSubMenuItems(elements.servicesMenu);
+      } else if (subMenuType === 'about' && elements.aboutMenu) {
+        elements.aboutMenu.classList.add('is-active');
+        animateSubMenuItems(elements.aboutMenu);
+      }
+    }, 80);
   }
 
   /**
@@ -213,9 +207,12 @@
   function closeSubMenu(animate = true) {
     if (!MenuState.currentSubMenu) return;
 
-    const duration = animate ? TIMING.subMenuTransition : 0;
+    // Immediately toggle icons and title
+    toggleNavBurgerIcons(false);
+    toggleNavAccountIcons(false);
+    toggleLogoAndTitle(null, false);
 
-    // Hide sub-menus first (let CSS handle display)
+    // Start submenu fade out (CSS transition will handle the animation)
     if (elements.servicesMenu) {
       elements.servicesMenu.classList.remove('is-active');
     }
@@ -224,19 +221,14 @@
       elements.aboutMenu.classList.remove('is-active');
     }
 
-    // Toggle nav_burger icons back using attribute selectors
-    toggleNavBurgerIcons(false);
-
-    // Toggle nav_account-mob icons back
-    toggleNavAccountIcons(false);
-
-    // Toggle logo and title back
-    toggleLogoAndTitle(null, false);
-
-    // Show main menu after submenu has started fading out (with delay)
-    setTimeout(() => {
+    // Show main menu after submenu has faded out (delay matches CSS transition)
+    if (animate) {
+      setTimeout(() => {
+        elements.mainMenu.classList.remove('is-hidden');
+      }, 150);
+    } else {
       elements.mainMenu.classList.remove('is-hidden');
-    }, animate ? 100 : 0);
+    }
 
     MenuState.currentSubMenu = null;
   }
@@ -567,36 +559,75 @@
     if (!navbar) return;
 
     let lastScrollTop = 0;
-    let scrollThreshold = 50; // Minimum scroll amount to trigger hide/show
+    let scrollThreshold = 10; // Minimum scroll amount to trigger hide/show
+    let ticking = false;
 
-    window.addEventListener('scroll', () => {
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const scrollDelta = scrollTop - lastScrollTop;
-
-      // Only hide/show on mobile
-      if (window.innerWidth <= 991) {
-        // Scrolling down and past the threshold
-        if (scrollDelta > scrollThreshold && scrollTop > 100) {
-          navbar.classList.add('is-hidden');
-        }
-        // Scrolling up
-        else if (scrollDelta < -scrollThreshold) {
-          navbar.classList.remove('is-hidden');
-        }
+    // Monitor mobile menu state
+    const observer = new MutationObserver(() => {
+      if (MenuState.isOpen) {
+        navbar.classList.add('menu-open');
       } else {
-        // On desktop, always show navbar
-        navbar.classList.remove('is-hidden');
-      }
-
-      lastScrollTop = scrollTop;
-    }, { passive: true });
-
-    // Handle resize
-    window.addEventListener('resize', () => {
-      if (window.innerWidth > 991) {
-        navbar.classList.remove('is-hidden');
+        navbar.classList.remove('menu-open');
       }
     });
+
+    // Observe menu wrapper for class changes
+    const menuWrapper = document.querySelector('.menu_open-wrapper');
+    if (menuWrapper) {
+      observer.observe(menuWrapper, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    // Monitor desktop dropdowns
+    const dropdowns = document.querySelectorAll('.w-dropdown');
+    dropdowns.forEach(dropdown => {
+      const dropdownObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+            const isOpen = dropdown.classList.contains('w-dropdown--open');
+            if (isOpen) {
+              navbar.classList.add('menu-open');
+            } else {
+              // Check if any other dropdown is still open
+              const anyOpen = document.querySelector('.w-dropdown--open');
+              if (!anyOpen && !MenuState.isOpen) {
+                navbar.classList.remove('menu-open');
+              }
+            }
+          }
+        });
+      });
+
+      dropdownObserver.observe(dropdown, { attributes: true, attributeFilter: ['class'] });
+    });
+
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          // Don't hide if menu is open
+          if (navbar.classList.contains('menu-open')) {
+            lastScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            ticking = false;
+            return;
+          }
+
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          const scrollDelta = scrollTop - lastScrollTop;
+
+          // Scrolling down and past the threshold
+          if (scrollDelta > scrollThreshold && scrollTop > 100) {
+            navbar.classList.add('is-hidden');
+          }
+          // Scrolling up
+          else if (scrollDelta < -scrollThreshold) {
+            navbar.classList.remove('is-hidden');
+          }
+
+          lastScrollTop = scrollTop;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }, { passive: true });
   }
 
   // Initialize when DOM is ready
