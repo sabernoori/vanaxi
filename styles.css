@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 /* Start styles for navbar animations and actions */
 /* Custom easing functions */
 :root {
@@ -199,14 +199,17 @@
 /* Nav logo and title animations - no conflict */
 .nav_logo-link-center {
   transition: opacity 0.2s var(--ease-in-out-quint),
-              transform 0.2s var(--ease-in-out-quint);
+              transform 0.2s var(--ease-in-out-quint),
+              filter 0.2s var(--ease-in-out-quint);
   position: absolute;
+  filter: blur(0px);
 }
 
 .nav_logo-link-center.is-hidden {
   opacity: 0;
   transform: scale(0.9);
   pointer-events: none;
+  filter: blur(8px);
 }
 
 /* Menu title - override display:none from current-styles.css */
