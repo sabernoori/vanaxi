@@ -207,12 +207,7 @@
   function closeSubMenu(animate = true) {
     if (!MenuState.currentSubMenu) return;
 
-    // Immediately toggle icons and title
-    toggleNavBurgerIcons(false);
-    toggleNavAccountIcons(false);
-    toggleLogoAndTitle(null, false);
-
-    // Start submenu fade out (CSS transition will handle the animation)
+    // Start submenu fade out first
     if (elements.servicesMenu) {
       elements.servicesMenu.classList.remove('is-active');
     }
@@ -221,14 +216,17 @@
       elements.aboutMenu.classList.remove('is-active');
     }
 
-    // Show main menu after submenu has faded out (delay matches CSS transition)
-    if (animate) {
-      setTimeout(() => {
-        elements.mainMenu.classList.remove('is-hidden');
-      }, 150);
-    } else {
+    // Wait for submenu to fade out, then toggle everything else
+    const delay = animate ? 200 : 0;
+    setTimeout(() => {
+      // Toggle icons and title after submenu has started fading
+      toggleNavBurgerIcons(false);
+      toggleNavAccountIcons(false);
+      toggleLogoAndTitle(null, false);
+
+      // Show main menu
       elements.mainMenu.classList.remove('is-hidden');
-    }
+    }, delay);
 
     MenuState.currentSubMenu = null;
   }
