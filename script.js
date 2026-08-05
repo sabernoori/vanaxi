@@ -152,7 +152,7 @@
     // After animation completes, reset everything completely
     setTimeout(() => {
       elements.menuWrapper.classList.remove('is-visible');
-      elements.mainMenu.classList.remove('is-hidden');
+      elements.mainMenu.classList.remove('is-pushed');
       MenuState.isAnimating = false;
     }, duration);
 
@@ -185,19 +185,17 @@
     toggleNavAccountIcons(true);
     toggleLogoAndTitle(subMenuType, true);
 
-    // Hide main menu (CSS handles fade out)
-    elements.mainMenu.classList.add('is-hidden');
+    // Push main menu to left (CSS handles the slide)
+    elements.mainMenu.classList.add('is-pushed');
 
-    // Show the appropriate sub-menu after a brief delay
-    setTimeout(() => {
-      if (subMenuType === 'services' && elements.servicesMenu) {
-        elements.servicesMenu.classList.add('is-active');
-        animateSubMenuItems(elements.servicesMenu);
-      } else if (subMenuType === 'about' && elements.aboutMenu) {
-        elements.aboutMenu.classList.add('is-active');
-        animateSubMenuItems(elements.aboutMenu);
-      }
-    }, 80);
+    // Show the appropriate sub-menu (slides in from right)
+    if (subMenuType === 'services' && elements.servicesMenu) {
+      elements.servicesMenu.classList.add('is-active');
+      animateSubMenuItems(elements.servicesMenu);
+    } else if (subMenuType === 'about' && elements.aboutMenu) {
+      elements.aboutMenu.classList.add('is-active');
+      animateSubMenuItems(elements.aboutMenu);
+    }
   }
 
   /**
@@ -207,7 +205,7 @@
   function closeSubMenu(animate = true) {
     if (!MenuState.currentSubMenu) return;
 
-    // Start submenu fade out first
+    // Slide submenu back to right (CSS handles the animation)
     if (elements.servicesMenu) {
       elements.servicesMenu.classList.remove('is-active');
     }
@@ -216,17 +214,13 @@
       elements.aboutMenu.classList.remove('is-active');
     }
 
-    // Wait for submenu to fade out, then toggle everything else
-    const delay = animate ? 200 : 0;
-    setTimeout(() => {
-      // Toggle icons and title after submenu has started fading
-      toggleNavBurgerIcons(false);
-      toggleNavAccountIcons(false);
-      toggleLogoAndTitle(null, false);
+    // Bring main menu back from left
+    elements.mainMenu.classList.remove('is-pushed');
 
-      // Show main menu
-      elements.mainMenu.classList.remove('is-hidden');
-    }, delay);
+    // Toggle icons and title
+    toggleNavBurgerIcons(false);
+    toggleNavAccountIcons(false);
+    toggleLogoAndTitle(null, false);
 
     MenuState.currentSubMenu = null;
   }
