@@ -209,13 +209,15 @@
 .menu_open.is-services,
 .menu_open.is-about {
   transform: translateX(100%);
-  transition: transform 0.35s var(--ease-in-out-quint);
+  opacity: 0;
+  transition: transform 0.35s var(--ease-in-out-quint),
+              opacity 0.3s var(--ease-in-out-quint);
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  will-change: transform;
+  will-change: transform, opacity;
   pointer-events: none;
   display: flex !important;
 }
@@ -223,8 +225,17 @@
 .menu_open.is-services.is-active,
 .menu_open.is-about.is-active {
   transform: translateX(0);
+  opacity: 1;
   pointer-events: auto;
   display: flex !important;
+}
+
+/* Submenu fade-out only (for closing entire menu) */
+.menu_open.is-services.is-closing,
+.menu_open.is-about.is-closing {
+  transform: translateX(0) !important;
+  opacity: 0;
+  transition: opacity 0.3s var(--ease-in-out-quint) !important;
 }
 
 /* Main menu - gets pushed left */

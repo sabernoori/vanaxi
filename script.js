@@ -136,11 +136,13 @@
     // Re-enable body scroll
     document.body.style.overflow = '';
 
-    // Reset sub-menu state
+    // Add class for fade-only closing (no slide)
     if (elements.servicesMenu) {
+      elements.servicesMenu.classList.add('is-closing');
       elements.servicesMenu.classList.remove('is-active');
     }
     if (elements.aboutMenu) {
+      elements.aboutMenu.classList.add('is-closing');
       elements.aboutMenu.classList.remove('is-active');
     }
 
@@ -154,6 +156,14 @@
       elements.menuWrapper.classList.remove('is-visible');
       elements.mainMenu.classList.remove('is-pushed');
       MenuState.isAnimating = false;
+
+      // Remove closing class
+      if (elements.servicesMenu) {
+        elements.servicesMenu.classList.remove('is-closing');
+      }
+      if (elements.aboutMenu) {
+        elements.aboutMenu.classList.remove('is-closing');
+      }
     }, duration);
 
     // Reset submenu state
