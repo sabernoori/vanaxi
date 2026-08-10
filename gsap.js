@@ -139,13 +139,63 @@
   // END: Desktop Services ScrollTrigger
   // ==========================================
 
+  // ==========================================
+  // START: Why Image First-Load Scale Down
+  // ==========================================
+  function initWhyImgScaleDown() {
+    const images = gsap.utils.toArray('.section_why .why_img');
+    if (!images.length) return;
+
+    images.forEach((img) => {
+      gsap.set(img, {
+        scale: 1.3,
+        transformOrigin: '50% 50%',
+        force3D: true
+      });
+
+      const play = () => {
+        gsap.to(img, {
+          scale: 1,
+          duration: 1,
+          ease: 'power3.out',
+          overwrite: 'auto'
+        });
+      };
+
+      const armTrigger = () => {
+        ScrollTrigger.create({
+          trigger: img.closest('.why_image-wrapper') || img,
+          start: 'top 88%',
+          once: true,
+          onEnter: play
+        });
+      };
+
+      if (img.complete && img.naturalWidth > 0) {
+        armTrigger();
+      } else {
+        img.addEventListener('load', armTrigger, { once: true });
+        img.addEventListener('error', armTrigger, { once: true });
+      }
+    });
+  }
+  // ==========================================
+  // END: Why Image First-Load Scale Down
+  // ==========================================
+
   function init() {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(initServicesDesktopScroll, 100);
+        setTimeout(() => {
+          initWhyImgScaleDown();
+          initServicesDesktopScroll();
+        }, 100);
       });
     } else {
-      setTimeout(initServicesDesktopScroll, 100);
+      setTimeout(() => {
+        initWhyImgScaleDown();
+        initServicesDesktopScroll();
+      }, 100);
     }
   }
 
@@ -153,6 +203,7 @@
 
   window.GSAPAnimations = {
     refreshServicesDesktop: initServicesDesktopScroll,
+    refreshWhyImgScale: initWhyImgScaleDown,
     refresh: () => ScrollTrigger.refresh()
   };
 

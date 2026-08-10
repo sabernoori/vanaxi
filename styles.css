@@ -576,3 +576,14 @@
   opacity: 0.5;
 }
 /* --- END: FAQ Accordion --- */
+
+/* --- START: Why Image First-Load Scale --- */
+.why_image-wrapper {
+  overflow: hidden;
+}
+
+.section_why .why_img {
+  will-change: transform;
+  transform-origin: center center;
+}
+/* --- END: Why Image First-Load Scale --- */
