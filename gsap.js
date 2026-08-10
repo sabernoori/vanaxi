@@ -143,39 +143,75 @@
   // START: Why Image First-Load Scale Down
   // ==========================================
   function initWhyImgScaleDown() {
-    const images = gsap.utils.toArray('.section_why .why_img');
-    if (!images.length) return;
+    ScrollTrigger.matchMedia({
+      // Mobile / tablet only
+      '(max-width: 991px)': function() {
+        const images = gsap.utils.toArray('.section_why .why_img');
+        if (!images.length) return;
 
-    images.forEach((img) => {
-      gsap.set(img, {
-        scale: 1.3,
-        transformOrigin: '50% 50%',
-        force3D: true
-      });
+        const cleanups = [];
 
-      const play = () => {
-        gsap.to(img, {
-          scale: 1,
-          duration: 1,
-          ease: 'power3.out',
-          overwrite: 'auto'
+        images.forEach((img) => {
+          const triggerEl =
+            img.closest('.why_img-box') ||
+            img.closest('.why_image-wrapper') ||
+            img;
+
+          gsap.set(img, {
+            scale: 1.3,
+            transformOrigin: '50% 50%',
+            force3D: true
+          });
+
+          let played = false;
+          const play = () => {
+            if (played) return;
+            played = true;
+            gsap.to(img, {
+              scale: 1,
+              duration: 1,
+              ease: 'power3.out',
+              overwrite: 'auto'
+            });
+          };
+
+          const armTrigger = () => {
+            const st = ScrollTrigger.create({
+              trigger: triggerEl,
+              start: 'top 92%',
+              once: true,
+              invalidateOnRefresh: true,
+              onEnter: play
+            });
+
+            // If already in / past the start line when armed, play immediately
+            // (common on mobile — onEnter does not fire retroactively)
+            if (st.start <= window.pageYOffset + window.innerHeight * 0.92) {
+              play();
+              st.kill();
+            }
+
+            cleanups.push(() => st.kill());
+            ScrollTrigger.refresh();
+          };
+
+          if (img.complete && img.naturalWidth > 0) {
+            armTrigger();
+          } else {
+            const onReady = () => armTrigger();
+            img.addEventListener('load', onReady, { once: true });
+            img.addEventListener('error', onReady, { once: true });
+            cleanups.push(() => {
+              img.removeEventListener('load', onReady);
+              img.removeEventListener('error', onReady);
+            });
+          }
         });
-      };
 
-      const armTrigger = () => {
-        ScrollTrigger.create({
-          trigger: img.closest('.why_image-wrapper') || img,
-          start: 'top 88%',
-          once: true,
-          onEnter: play
-        });
-      };
-
-      if (img.complete && img.naturalWidth > 0) {
-        armTrigger();
-      } else {
-        img.addEventListener('load', armTrigger, { once: true });
-        img.addEventListener('error', armTrigger, { once: true });
+        return function() {
+          cleanups.forEach((fn) => fn());
+          gsap.set(images, { clearProps: 'transform' });
+        };
       }
     });
   }
