@@ -541,10 +541,6 @@
 /* --- END: Desktop Services Scroll Accordion --- */
 
 /* --- START: FAQ Accordion --- */
-.faq_item {
-  transition: background-color 0.35s var(--ease-in-out-quint);
-}
-
 .faq_question-group .icon-24 {
   flex: 0 0 auto;
   transition: transform 0.35s var(--ease-in-out-quint);

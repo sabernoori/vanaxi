@@ -964,20 +964,16 @@
 
   function closeItem(item, immediate) {
     const parts = getParts(item);
+
+    // Drop active styles immediately (background / icon) — don't wait for height
+    parts.item.classList.remove('is-active');
     parts.item.setAttribute('aria-expanded', 'false');
 
     if (parts.icon) {
       parts.icon.classList.remove('is-open');
     }
 
-    collapseAnswer(parts.answer, immediate, () => {
-      parts.item.classList.remove('is-active');
-    });
-
-    // For immediate close, also drop active now
-    if (immediate) {
-      parts.item.classList.remove('is-active');
-    }
+    collapseAnswer(parts.answer, immediate);
   }
 
   function openItem(item, list, immediate) {
@@ -1010,24 +1006,21 @@
 
     items.forEach((item) => {
       const parts = getParts(item);
-      const isOpen = item.classList.contains('is-active');
 
+      // Always start closed on first load
+      item.classList.remove('is-active');
       item.setAttribute('role', 'button');
       item.setAttribute('tabindex', '0');
-      item.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      item.setAttribute('aria-expanded', 'false');
 
       if (parts.icon) {
-        parts.icon.classList.toggle('is-open', isOpen);
+        parts.icon.classList.remove('is-open');
       }
 
       if (parts.answer) {
-        if (isOpen) {
-          parts.answer.classList.remove('is-hide');
-          parts.answer.style.height = 'auto';
-        } else {
-          parts.answer.classList.add('is-hide');
-          parts.answer.style.height = '0px';
-        }
+        clearHeightListener(parts.answer);
+        parts.answer.classList.add('is-hide');
+        parts.answer.style.height = '0px';
       }
 
       item.addEventListener('click', () => {
