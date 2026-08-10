@@ -55,13 +55,14 @@
   transition: opacity var(--transition-base),
               visibility var(--transition-base),
               transform var(--transition-base);
-  display: none;
+  display: none !important;
 }
 
 .menu_open-wrapper.is-visible {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
+  display: flex !important;
 }
 
 .menu_open-wrapper.is-open .menu_open-box {
@@ -69,12 +70,8 @@
   transform: translateY(0) scale(1);
 }
 
-/* Mobile only - show menu wrapper */
+/* Media queries for specific breakpoint adjustments */
 @media screen and (max-width: 991px) {
-  .menu_open-wrapper {
-    display: flex;
-  }
-
   .navbar.is-services-section {
     position: absolute;
   }
