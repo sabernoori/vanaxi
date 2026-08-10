@@ -655,3 +655,408 @@
 /**
  * End of Menu Toggle Animation Controller
 */
+
+// ==========================================
+// START: Desktop Services Accordion Controller
+// ==========================================
+(function() {
+  'use strict';
+
+  const DESKTOP_MQ = '(min-width: 992px)';
+  const IMAGE_KEYS = ['on-demand', 'city-to-city', 'transfer', 'personal'];
+
+  const state = {
+    activeIndex: 0,
+    activeImageIndex: -1,
+    items: [],
+    images: [],
+    isDesktop: false,
+    isReady: false,
+    scrollToIndex: null,
+    imageTween: null
+  };
+
+  function queryDesktopRoot() {
+    return document.querySelector('.services_box-desktop');
+  }
+
+  function collectItems(root) {
+    return Array.from(root.querySelectorAll('.services_list > .services_item')).map((item) => {
+      return {
+        el: item,
+        title: item.querySelector('.services_item-title-holder'),
+        content: item.querySelector('.services_item-content-holder'),
+        progress: item.querySelector('.services_progress')
+      };
+    });
+  }
+
+  function collectImages(root) {
+    const wrapper = root.querySelector('.services_img-wrapper-desk');
+    if (!wrapper) return [];
+
+    return IMAGE_KEYS.map((key) => wrapper.querySelector(`.services_img.${key}`)).filter(Boolean);
+  }
+
+  function setProgressFill(progressEl, amount) {
+    if (!progressEl) return;
+    const value = Math.max(0, Math.min(1, amount));
+    progressEl.style.transform = `scaleX(${value})`;
+  }
+
+  function setActiveImage(index, immediate) {
+    if (!state.images.length) return;
+    if (index === state.activeImageIndex && !immediate) return;
+
+    const nextImg = state.images[index];
+    if (!nextImg) return;
+
+    // Stop any previous GSAP transforms/tweens so nothing can slide/scale
+    if (typeof gsap !== 'undefined') {
+      if (state.imageTween) {
+        state.imageTween.kill();
+        state.imageTween = null;
+      }
+      gsap.killTweensOf(state.images);
+      gsap.set(state.images, {
+        clearProps: 'transform,translate,x,y,xPercent,yPercent,scale,scaleX,scaleY,rotation'
+      });
+    }
+
+    state.images.forEach((img, i) => {
+      const isActive = i === index;
+      img.classList.toggle('is-active', isActive);
+      img.style.transform = 'none';
+      img.style.translate = 'none';
+
+      if (immediate) {
+        img.style.transition = 'none';
+        img.style.opacity = isActive ? '1' : '0';
+        // Force reflow then restore CSS transition for later fades
+        void img.offsetWidth;
+        img.style.transition = '';
+      } else {
+        img.style.opacity = isActive ? '1' : '0';
+      }
+    });
+
+    state.activeImageIndex = index;
+  }
+
+  function setItemClasses(entry, isActive) {
+    entry.el.classList.toggle('is-open', isActive);
+
+    if (entry.title) {
+      entry.title.classList.toggle('is-active', isActive);
+      entry.title.classList.toggle('is-not-active', !isActive);
+    }
+
+    if (entry.content) {
+      entry.content.classList.toggle('is-not-active', !isActive);
+    }
+
+    if (entry.progress) {
+      entry.progress.classList.toggle('is-visible', isActive);
+      entry.progress.classList.toggle('is-hidden', !isActive);
+      if (!isActive) {
+        setProgressFill(entry.progress, 0);
+      }
+    }
+  }
+
+  function activate(index, options) {
+    if (!state.isReady || !state.isDesktop) return;
+    if (index < 0 || index >= state.items.length) return;
+
+    const opts = options || {};
+    const previous = state.activeIndex;
+    const next = index;
+
+    if (previous !== next) {
+      state.items.forEach((entry, i) => {
+        setItemClasses(entry, i === next);
+      });
+      setActiveImage(next, false);
+      state.activeIndex = next;
+    } else {
+      setItemClasses(state.items[next], true);
+    }
+
+    const progressAmount = typeof opts.progress === 'number' ? opts.progress : (previous === next ? undefined : 0);
+    if (typeof progressAmount === 'number' && state.items[next]) {
+      setProgressFill(state.items[next].progress, progressAmount);
+    }
+
+    if (opts.scroll && typeof state.scrollToIndex === 'function') {
+      state.scrollToIndex(next);
+    }
+  }
+
+  function setFromScroll(index, progress) {
+    activate(index, { progress: progress, scroll: false });
+  }
+
+  function onItemClick(event) {
+    if (!state.isDesktop) return;
+
+    const item = event.currentTarget;
+    const index = state.items.findIndex((entry) => entry.el === item);
+    if (index < 0 || index === state.activeIndex) return;
+
+    activate(index, { progress: 0, scroll: true });
+  }
+
+  function bindClicks() {
+    state.items.forEach((entry) => {
+      if (!entry.el) return;
+      entry.el.addEventListener('click', onItemClick);
+      entry.el.setAttribute('role', 'button');
+      entry.el.setAttribute('tabindex', '0');
+      entry.el.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onItemClick(event);
+        }
+      });
+    });
+  }
+
+  function syncDesktopFlag() {
+    state.isDesktop = window.matchMedia(DESKTOP_MQ).matches;
+  }
+
+  function init() {
+    const root = queryDesktopRoot();
+    if (!root) return;
+
+    state.items = collectItems(root);
+    state.images = collectImages(root);
+
+    if (state.items.length === 0) {
+      console.warn('ServicesDesktop: No service items found');
+      return;
+    }
+
+    syncDesktopFlag();
+    bindClicks();
+
+    // Initial UI state from markup / first item
+    let initial = state.items.findIndex((entry) => entry.title && entry.title.classList.contains('is-active'));
+    if (initial < 0) initial = 0;
+
+    state.isReady = true;
+    if (state.isDesktop) {
+      setActiveImage(initial, true);
+      activate(initial, { progress: 0, scroll: false });
+    }
+
+    const mq = window.matchMedia(DESKTOP_MQ);
+    const onMqChange = () => {
+      syncDesktopFlag();
+      if (state.isDesktop) {
+        setActiveImage(state.activeIndex, true);
+        activate(state.activeIndex, { progress: 0, scroll: false });
+      }
+    };
+
+    if (typeof mq.addEventListener === 'function') {
+      mq.addEventListener('change', onMqChange);
+    } else if (typeof mq.addListener === 'function') {
+      mq.addListener(onMqChange);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  window.ServicesDesktop = {
+    activate: activate,
+    setFromScroll: setFromScroll,
+    setProgressFill: setProgressFill,
+    getActiveIndex: () => state.activeIndex,
+    getItemCount: () => state.items.length,
+    isReady: () => state.isReady,
+    isDesktop: () => state.isDesktop,
+    registerScrollToIndex: (fn) => {
+      state.scrollToIndex = fn;
+    },
+    getItems: () => state.items
+  };
+})();
+// ==========================================
+// END: Desktop Services Accordion Controller
+// ==========================================
+
+// ==========================================
+// START: FAQ Accordion
+// ==========================================
+(function() {
+  'use strict';
+
+  function getParts(item) {
+    return {
+      item: item,
+      answer: item.querySelector('.faq_answer'),
+      icon: item.querySelector('.faq_question-group .icon-24')
+    };
+  }
+
+  function clearHeightListener(answer) {
+    if (answer._faqHeightHandler) {
+      answer.removeEventListener('transitionend', answer._faqHeightHandler);
+      answer._faqHeightHandler = null;
+    }
+  }
+
+  function collapseAnswer(answer, immediate, onDone) {
+    if (!answer) {
+      if (onDone) onDone();
+      return;
+    }
+
+    clearHeightListener(answer);
+
+    if (immediate) {
+      answer.style.height = '0px';
+      answer.classList.add('is-hide');
+      if (onDone) onDone();
+      return;
+    }
+
+    answer.style.height = answer.scrollHeight + 'px';
+    answer.offsetHeight;
+
+    answer._faqHeightHandler = (event) => {
+      if (event.propertyName !== 'height') return;
+      clearHeightListener(answer);
+      answer.classList.add('is-hide');
+      if (onDone) onDone();
+    };
+    answer.addEventListener('transitionend', answer._faqHeightHandler);
+    answer.style.height = '0px';
+  }
+
+  function expandAnswer(answer, immediate) {
+    if (!answer) return;
+    clearHeightListener(answer);
+
+    answer.classList.remove('is-hide');
+
+    if (immediate) {
+      answer.style.height = 'auto';
+      return;
+    }
+
+    answer.style.height = '0px';
+    answer.offsetHeight;
+    answer.style.height = answer.scrollHeight + 'px';
+
+    answer._faqHeightHandler = (event) => {
+      if (event.propertyName !== 'height') return;
+      clearHeightListener(answer);
+      answer.style.height = 'auto';
+    };
+    answer.addEventListener('transitionend', answer._faqHeightHandler);
+  }
+
+  function closeItem(item, immediate) {
+    const parts = getParts(item);
+    parts.item.setAttribute('aria-expanded', 'false');
+
+    if (parts.icon) {
+      parts.icon.classList.remove('is-open');
+    }
+
+    collapseAnswer(parts.answer, immediate, () => {
+      parts.item.classList.remove('is-active');
+    });
+
+    // For immediate close, also drop active now
+    if (immediate) {
+      parts.item.classList.remove('is-active');
+    }
+  }
+
+  function openItem(item, list, immediate) {
+    list.querySelectorAll('.faq_item.is-active').forEach((active) => {
+      if (active !== item) closeItem(active, immediate);
+    });
+
+    const parts = getParts(item);
+    parts.item.classList.add('is-active');
+    parts.item.setAttribute('aria-expanded', 'true');
+
+    if (parts.icon) {
+      parts.icon.classList.add('is-open');
+    }
+
+    expandAnswer(parts.answer, immediate);
+  }
+
+  function toggleItem(item, list) {
+    if (item.classList.contains('is-active')) {
+      closeItem(item, false);
+    } else {
+      openItem(item, list, false);
+    }
+  }
+
+  function initFaqList(list) {
+    const items = Array.from(list.querySelectorAll('.faq_item'));
+    if (!items.length) return;
+
+    items.forEach((item) => {
+      const parts = getParts(item);
+      const isOpen = item.classList.contains('is-active');
+
+      item.setAttribute('role', 'button');
+      item.setAttribute('tabindex', '0');
+      item.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+      if (parts.icon) {
+        parts.icon.classList.toggle('is-open', isOpen);
+      }
+
+      if (parts.answer) {
+        if (isOpen) {
+          parts.answer.classList.remove('is-hide');
+          parts.answer.style.height = 'auto';
+        } else {
+          parts.answer.classList.add('is-hide');
+          parts.answer.style.height = '0px';
+        }
+      }
+
+      item.addEventListener('click', () => {
+        toggleItem(item, list);
+      });
+
+      item.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          toggleItem(item, list);
+        }
+      });
+    });
+  }
+
+  function init() {
+    document.querySelectorAll('.faq_list').forEach(initFaqList);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  window.FaqAccordion = {
+    refresh: init
+  };
+})();
+// ==========================================
+// END: FAQ Accordion
+// ==========================================

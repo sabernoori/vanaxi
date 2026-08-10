@@ -1,141 +1,158 @@
 /**
  * GSAP Animations for Vanaxi Website
- * ScrollTrigger-based fade animations for why_in-center sections
- *
- * Structure:
- * - .why_item (vertical sections stacked)
- * - .why_in-center (overflow: hidden, acts as viewport window)
- * - .why_in-center-fixed (position: fixed, full screen, centered)
- * - .why_in-center-content (the text that fades)
- *
- * Problem: All 4 .why_in-center sections are stacked vertically,
- * so they all enter viewport at the same time. Since .why_in-center-fixed
- * is position:fixed, all 4 fixed containers overlap.
- *
- * Solution: Only show ONE section's content at a time based on
- * which section is closest to the viewport center.
  */
 
 (function() {
   'use strict';
 
-  // Register GSAP plugins
   gsap.registerPlugin(ScrollTrigger);
 
-  /**
-   * Initialize fade animations for why_in-center sections
-   */
-  function initWhySectionAnimations() {
-    console.log('GSAP: Initializing why section animations');
+  // ==========================================
+  // START: Desktop Services ScrollTrigger
+  // ==========================================
+  function initServicesDesktopScroll() {
+    const longWrapper = document.querySelector('.services_box-desktop .services_long-wrapper');
+    if (!longWrapper) return;
 
-    // Select all why_in-center sections
-    const whySections = document.querySelectorAll('.why_in-center');
+    let scrollTriggerInstance = null;
+    let isProgrammaticScroll = false;
 
-    if (whySections.length === 0) {
-      console.warn('GSAP: No .why_in-center sections found!');
-      return;
+    function waitForServicesDesktop(callback) {
+      if (window.ServicesDesktop && window.ServicesDesktop.isReady()) {
+        callback();
+        return;
+      }
+
+      let attempts = 0;
+      const timer = setInterval(() => {
+        attempts += 1;
+        if (window.ServicesDesktop && window.ServicesDesktop.isReady()) {
+          clearInterval(timer);
+          callback();
+        } else if (attempts > 40) {
+          clearInterval(timer);
+          console.warn('GSAP: ServicesDesktop controller not ready');
+        }
+      }, 50);
     }
 
-    console.log('GSAP: Found', whySections.length, 'why_in-center sections');
+    function getScrollBounds() {
+      const rect = longWrapper.getBoundingClientRect();
+      const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+      const start = rect.top + scrollY;
+      const end = start + longWrapper.offsetHeight - window.innerHeight;
+      return { start: start, end: Math.max(start + 1, end) };
+    }
 
-    // Store sections and contents
-    const sections = Array.from(whySections);
-    const contents = sections.map(section => {
-      const content = section.querySelector('.why_in-center-content');
-      if (content) {
-        content.style.removeProperty('opacity');
-        gsap.set(content, { opacity: 0 });
-      }
-      return content;
-    });
+    function scrollToIndex(index) {
+      const api = window.ServicesDesktop;
+      if (!api) return;
 
-    // Create ScrollTrigger for the parent section
-    ScrollTrigger.create({
-      trigger: ".section_why",
-      start: "top top",
-      end: "bottom bottom",
-      scrub: true,
-      markers: false,  // Set to true for debugging
-      onUpdate: (self) => {
-        const progress = self.progress;
-        const totalSections = sections.length;
+      const count = api.getItemCount();
+      if (count <= 0) return;
 
-        // Calculate which section should be active
-        // Use a more precise calculation that accounts for section positions
-        let activeIdx = 0;
-        let subProgress = 0;
+      const clamped = Math.max(0, Math.min(count - 1, index));
+      const bounds = getScrollBounds();
+      const targetProgress = (clamped + 0.02) / count;
+      const targetY = bounds.start + (bounds.end - bounds.start) * targetProgress;
 
-        for (let i = 0; i < totalSections; i++) {
-          const sectionStart = i / totalSections;
-          const sectionEnd = (i + 1) / totalSections;
+      isProgrammaticScroll = true;
+      api.setFromScroll(clamped, 0);
 
-          if (progress >= sectionStart && progress < sectionEnd) {
-            activeIdx = i;
-            subProgress = (progress - sectionStart) / (sectionEnd - sectionStart);
-            break;
-          } else if (i === totalSections - 1) {
-            // Last section
-            activeIdx = i;
-            subProgress = 1;
-          }
+      const scrollProxy = {
+        y: window.pageYOffset || document.documentElement.scrollTop
+      };
+
+      gsap.to(scrollProxy, {
+        duration: 0.9,
+        y: targetY,
+        ease: 'power2.inOut',
+        onUpdate: () => {
+          window.scrollTo(0, scrollProxy.y);
+        },
+        onComplete: () => {
+          isProgrammaticScroll = false;
+          ScrollTrigger.update();
         }
+      });
+    }
 
-        // Log active section change
-        if (window.lastActiveIdx !== activeIdx) {
-          console.log('GSAP: Active section:', activeIdx, 'sub-progress:', subProgress.toFixed(2));
-          window.lastActiveIdx = activeIdx;
+    function createScrollTrigger() {
+      const api = window.ServicesDesktop;
+      if (!api || !api.isDesktop()) return;
+
+      const count = api.getItemCount();
+      if (count <= 0) return;
+
+      if (scrollTriggerInstance) {
+        scrollTriggerInstance.kill();
+        scrollTriggerInstance = null;
+      }
+
+      scrollTriggerInstance = ScrollTrigger.create({
+        trigger: longWrapper,
+        start: 'top top',
+        end: 'bottom bottom',
+        scrub: 0.35,
+        invalidateOnRefresh: true,
+        onUpdate: (self) => {
+          if (isProgrammaticScroll) return;
+
+          const progress = self.progress;
+          const rawIndex = Math.min(count - 1, Math.floor(progress * count));
+          const segmentStart = rawIndex / count;
+          const segmentSize = 1 / count;
+          const segmentProgress = segmentSize > 0
+            ? (progress - segmentStart) / segmentSize
+            : 0;
+
+          api.setFromScroll(rawIndex, Math.max(0, Math.min(1, segmentProgress)));
         }
+      });
 
-        // Update all sections
-        contents.forEach((content, index) => {
-          if (!content) return;
+      api.registerScrollToIndex(scrollToIndex);
+      ScrollTrigger.refresh();
+    }
 
-          let opacity = 0;
+    waitForServicesDesktop(() => {
+      const mq = window.matchMedia('(min-width: 992px)');
 
-          if (index === activeIdx) {
-            // Calculate opacity based on sub-progress with adjusted timing
-            if (subProgress < 0.15) {
-              // Fade in: 0% to 15% → opacity 0 to 1
-              opacity = subProgress / 0.15;
-            } else if (subProgress < 0.85) {
-              // Visible: 15% to 85% → opacity 1
-              opacity = 1;
-            } else {
-              // Fade out: 85% to 100% → opacity 1 to 0
-              opacity = 1 - ((subProgress - 0.85) / 0.15);
-            }
-          } else {
-            opacity = 0;
-          }
+      const setup = () => {
+        if (mq.matches) {
+          createScrollTrigger();
+        } else if (scrollTriggerInstance) {
+          scrollTriggerInstance.kill();
+          scrollTriggerInstance = null;
+        }
+      };
 
-          gsap.set(content, { opacity: opacity });
-        });
+      setup();
+
+      if (typeof mq.addEventListener === 'function') {
+        mq.addEventListener('change', setup);
+      } else if (typeof mq.addListener === 'function') {
+        mq.addListener(setup);
       }
     });
-
-    ScrollTrigger.refresh();
-    console.log('GSAP: ScrollTrigger setup complete');
   }
+  // ==========================================
+  // END: Desktop Services ScrollTrigger
+  // ==========================================
 
-  /**
-   * Initialize all GSAP animations
-   */
   function init() {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(initWhySectionAnimations, 100);
+        setTimeout(initServicesDesktopScroll, 100);
       });
     } else {
-      setTimeout(initWhySectionAnimations, 100);
+      setTimeout(initServicesDesktopScroll, 100);
     }
   }
 
-  // Initialize
   init();
 
-  // Expose for manual refresh
   window.GSAPAnimations = {
-    refreshWhySections: initWhySectionAnimations,
+    refreshServicesDesktop: initServicesDesktopScroll,
     refresh: () => ScrollTrigger.refresh()
   };
 

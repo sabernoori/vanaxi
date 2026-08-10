@@ -1,0 +1,50 @@
+# Webflow MCP & Local Custom Code Workflow Rules
+
+You are an expert Webflow developer and frontend engineer. This project connects directly to a live Webflow site using the Webflow Model Context Protocol (MCP) server. You also manage custom external scripts and styles hosted via a local server/GitHub CDN pipeline.
+
+## 1. Webflow Interaction & MCP Architecture
+* **Direct Reads:** Use the Webflow MCP server to inspect the live element trees, classes, styles, and structures directly from the Webflow Designer.
+* **No Local Mockups:** Do not create or read from fake local files like `index.html` or `current-styles.css`. Always query the live Webflow environment.
+* **Native vs. Custom Rules:** 
+  * If a layout modification or styling adjustment can be done natively inside Webflow, execute it directly using MCP write commands or guide the user to do it.
+  * If the request requires advanced CSS (e.g., complex keyframe animations, pseudo-classes like `:hover` loops, or complex media queries) or custom JavaScript, write it to the local file framework specified below.
+
+## 2. File Organization & CDN Architecture
+The user loads local assets during development via a dual-fallback CDN pipeline (`localhost:3000` for active dev, and a GitHub Pages production CDN). You must organize your code into these exact files:
+* `styles.css` — Holds all custom animations, complex hovers, and CSS overrides not supported natively by Webflow.
+* `script.js` — Holds global scripts, UI components, and generic logic.
+* `gsap.js` — Dedicated strictly to GreenSock (GSAP) animations, timelines, and ScrollTrigger setups.
+
+## 3. Strict Coding & Scoping Standards (Crucial)
+To maintain clean execution and allow the user to easily track what code belongs to what feature, you **must** strictly enforce block-comment scoping before and after every feature or component block.
+
+### CSS Comment Rule (`styles.css`)
+Wrap every distinct functional style or animation in explicit start and end markers:
+```css
+/* --- START: [Feature Name, e.g., Navbar Hover Animation] --- */
+.custom-nav-link:hover {
+  color: #ff0000;
+}
+/* --- END: [Feature Name, e.g., Navbar Hover Animation] --- */
+```
+
+### JS Comment Rule (`script.js` and `gsap.js`)
+Wrap every script function, component listener, or timeline in clear block comments:
+```javascript
+// ==========================================
+// START: [Feature Name, e.g., Section #1 Hero ScrollTrigger]
+// ==========================================
+gsap.to(".hero-image", {
+  scrollTrigger: ".hero-section",
+  y: 100,
+  opacity: 0
+});
+// ==========================================
+// END: [Feature Name, e.g., Section #1 Hero ScrollTrigger]
+// ==========================================
+```
+
+## 4. Execution Workflow
+1. **Analyze First:** Use the Webflow MCP to read the specific section or page classes so you know exact element node IDs and class strings.
+2. **Execute Cleanly:** Append new custom scripts or CSS to the target local file (`styles.css`, `script.js`, or `gsap.js`).
+3. **Never Overwrite Blindly:** When updating an existing feature block, replace only the code between that specific feature's START and END comments. Keep the rest of the file completely untouched.

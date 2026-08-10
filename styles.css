@@ -399,3 +399,180 @@
   transition-delay: 0.4s;
 }
 /* End styles for navbar animations and actions */
+
+/* --- START: Desktop Services Scroll Accordion --- */
+@media screen and (min-width: 992px) {
+  .services_box-desktop .services_wrapper {
+    align-items: start;
+  }
+
+  .services_box-desktop .services_item {
+    cursor: pointer;
+  }
+
+  /* Image column stays fixed size so tab open/close cannot shove it */
+  .services_box-desktop .services_img-wrapper-desk {
+    position: relative !important;
+    align-self: start;
+    width: 100%;
+    height: 90vh !important;
+    min-height: 90vh !important;
+    max-height: 90vh !important;
+    overflow: hidden !important;
+  }
+
+  .services_box-desktop .services_img-wrapper-desk .services_img {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;
+    object-fit: cover !important;
+    object-position: center center !important;
+    display: block !important;
+    opacity: 0;
+    z-index: 0;
+    transform: none !important;
+    translate: none !important;
+    transition: opacity 0.9s ease-in-out !important;
+    pointer-events: none;
+    will-change: opacity;
+  }
+
+  .services_box-desktop .services_img-wrapper-desk .services_img.is-active {
+    opacity: 1;
+    z-index: 1;
+  }
+
+  .services_box-desktop .services_item-title-holder {
+    transition:
+      color 0.35s var(--ease-in-out-quint),
+      opacity 0.35s var(--ease-in-out-quint);
+  }
+
+  /* Equal 2rem vertical padding on the box; bottom only while open */
+  .services_box-desktop .services_item-inside-box {
+    padding-top: 2rem;
+    padding-bottom: 1rem;
+    transition: padding-bottom 0.45s var(--ease-in-out-quint);
+  }
+
+  .services_box-desktop .services_item.is-open .services_item-inside-box {
+    padding-bottom: 1rem;
+  }
+
+  /* Kill default heading margins that unbalance the top padding */
+  .services_box-desktop .services_item-title-holder .h5,
+  .services_box-desktop .services_item-title-holder h3 {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  /* Keep content internal rhythm; avoid extra collapse gaps */
+  .services_box-desktop .services_item-content-holder > :first-child {
+    margin-top: 0;
+  }
+
+  .services_box-desktop .services_item-content-holder > :last-child {
+    margin-bottom: 0;
+  }
+
+  /* Match Webflow layout when content is open */
+  .services_box-desktop .services_item-content-holder {
+    display: flex !important;
+    flex-flow: column;
+    gap: 1rem;
+    direction: rtl;
+    opacity: 1;
+    overflow: hidden;
+    max-height: 60rem;
+    transition:
+      max-height 0.45s var(--ease-in-out-quint),
+      opacity 0.35s ease;
+  }
+
+  .services_box-desktop .services_item-content-holder.is-not-active {
+    display: flex !important;
+    flex-flow: column;
+    gap: 1rem;
+    direction: rtl;
+    max-height: 0 !important;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /*
+   * Spacer sits outside inside-box. Keep it collapsed on desktop so it
+   * doesn't double the bottom 2rem padding before the progress bar.
+   */
+  .services_box-desktop .spacer-2rem.is-services {
+    display: block;
+    min-height: 0 !important;
+    height: 0 !important;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .services_box-desktop .services_progress {
+    width: 100% !important;
+    transform: scaleX(0);
+    transform-origin: right center;
+    transition: opacity 0.3s var(--ease-in-out-quint);
+    will-change: transform;
+  }
+
+  .services_box-desktop .services_progress.is-hidden {
+    display: block !important;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .services_box-desktop .services_progress.is-visible {
+    display: block !important;
+    opacity: 1;
+  }
+}
+/* --- END: Desktop Services Scroll Accordion --- */
+
+/* --- START: FAQ Accordion --- */
+.faq_item {
+  transition: background-color 0.35s var(--ease-in-out-quint);
+}
+
+.faq_question-group .icon-24 {
+  flex: 0 0 auto;
+  transition: transform 0.35s var(--ease-in-out-quint);
+  transform-origin: center center;
+}
+
+.faq_item.is-active .faq_question-group .icon-24 {
+  transform: rotate(45deg);
+}
+
+.faq_answer {
+  display: block !important;
+  box-sizing: border-box;
+  overflow: hidden;
+  height: 0;
+  opacity: 0;
+  margin: 0;
+  padding: 0;
+  transition:
+    height 0.35s var(--ease-in-out-quint),
+    opacity 0.28s ease;
+}
+
+.faq_answer.is-hide {
+  display: block !important;
+}
+
+.faq_item.is-active .faq_answer {
+  opacity: 0.5;
+}
+/* --- END: FAQ Accordion --- */
