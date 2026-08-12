@@ -898,152 +898,92 @@
 
   function getParts(item) {
     return {
-      item: item,
       answer: item.querySelector('.faq_answer'),
       icon: item.querySelector('.faq_question-group .icon-24')
     };
   }
 
-  function clearHeightListener(answer) {
-    if (answer._faqHeightHandler) {
-      answer.removeEventListener('transitionend', answer._faqHeightHandler);
-      answer._faqHeightHandler = null;
-    }
-  }
-
-  function collapseAnswer(answer, immediate, onDone) {
-    if (!answer) {
-      if (onDone) onDone();
-      return;
-    }
-
-    clearHeightListener(answer);
-
-    if (immediate) {
-      answer.style.height = '0px';
-      answer.classList.add('is-hide');
-      if (onDone) onDone();
-      return;
-    }
-
-    answer.style.height = answer.scrollHeight + 'px';
-    answer.offsetHeight;
-
-    answer._faqHeightHandler = (event) => {
-      if (event.propertyName !== 'height') return;
-      clearHeightListener(answer);
-      answer.classList.add('is-hide');
-      if (onDone) onDone();
-    };
-    answer.addEventListener('transitionend', answer._faqHeightHandler);
-    answer.style.height = '0px';
-  }
-
-  function expandAnswer(answer, immediate) {
-    if (!answer) return;
-    clearHeightListener(answer);
-
-    answer.classList.remove('is-hide');
-
-    if (immediate) {
-      answer.style.height = 'auto';
-      return;
-    }
-
-    answer.style.height = '0px';
-    answer.offsetHeight;
-    answer.style.height = answer.scrollHeight + 'px';
-
-    answer._faqHeightHandler = (event) => {
-      if (event.propertyName !== 'height') return;
-      clearHeightListener(answer);
-      answer.style.height = 'auto';
-    };
-    answer.addEventListener('transitionend', answer._faqHeightHandler);
-  }
-
-  function closeItem(item, immediate) {
+  function closeItem(item) {
     const parts = getParts(item);
-
-    // Drop active styles immediately (background / icon) — don't wait for height
-    parts.item.classList.remove('is-active');
-    parts.item.setAttribute('aria-expanded', 'false');
-
-    if (parts.icon) {
-      parts.icon.classList.remove('is-open');
+    item.classList.remove('is-active');
+    item.setAttribute('aria-expanded', 'false');
+    if (parts.icon) parts.icon.classList.remove('is-open');
+    if (parts.answer) {
+      parts.answer.classList.add('is-hide');
+      parts.answer.style.removeProperty('height');
+      parts.answer.style.removeProperty('max-height');
     }
-
-    collapseAnswer(parts.answer, immediate);
   }
 
-  function openItem(item, list, immediate) {
+  function openItem(item, list) {
     list.querySelectorAll('.faq_item.is-active').forEach((active) => {
-      if (active !== item) closeItem(active, immediate);
+      if (active !== item) closeItem(active);
     });
 
     const parts = getParts(item);
-    parts.item.classList.add('is-active');
-    parts.item.setAttribute('aria-expanded', 'true');
-
-    if (parts.icon) {
-      parts.icon.classList.add('is-open');
+    item.classList.add('is-active');
+    item.setAttribute('aria-expanded', 'true');
+    if (parts.icon) parts.icon.classList.add('is-open');
+    if (parts.answer) {
+      parts.answer.classList.remove('is-hide');
+      parts.answer.style.removeProperty('height');
+      parts.answer.style.removeProperty('max-height');
     }
-
-    expandAnswer(parts.answer, immediate);
   }
 
   function toggleItem(item, list) {
-    if (item.classList.contains('is-active')) {
-      closeItem(item, false);
-    } else {
-      openItem(item, list, false);
+    if (item.classList.contains('is-active')) closeItem(item);
+    else openItem(item, list);
+  }
+
+  function bindItem(item, list) {
+    if (item.dataset.faqBound === 'true') return;
+    item.dataset.faqBound = 'true';
+
+    const parts = getParts(item);
+    item.classList.remove('is-active');
+    item.setAttribute('role', 'button');
+    item.setAttribute('tabindex', '0');
+    item.setAttribute('aria-expanded', 'false');
+    if (parts.icon) parts.icon.classList.remove('is-open');
+    if (parts.answer) {
+      parts.answer.classList.add('is-hide');
+      parts.answer.style.removeProperty('height');
+      parts.answer.style.removeProperty('max-height');
     }
+
+    item.addEventListener('click', (event) => {
+      // Ignore nested interactive controls if any
+      if (event.target.closest('a, button, input, textarea, select')) return;
+      event.preventDefault();
+      toggleItem(item, list);
+    });
+
+    item.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      toggleItem(item, list);
+    });
   }
 
   function initFaqList(list) {
     const items = Array.from(list.querySelectorAll('.faq_item'));
-    if (!items.length) return;
-
-    items.forEach((item) => {
-      const parts = getParts(item);
-
-      // Always start closed on first load
-      item.classList.remove('is-active');
-      item.setAttribute('role', 'button');
-      item.setAttribute('tabindex', '0');
-      item.setAttribute('aria-expanded', 'false');
-
-      if (parts.icon) {
-        parts.icon.classList.remove('is-open');
-      }
-
-      if (parts.answer) {
-        clearHeightListener(parts.answer);
-        parts.answer.classList.add('is-hide');
-        parts.answer.style.height = '0px';
-      }
-
-      item.addEventListener('click', () => {
-        toggleItem(item, list);
-      });
-
-      item.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          toggleItem(item, list);
-        }
-      });
-    });
+    items.forEach((item) => bindItem(item, list));
   }
 
   function init() {
     document.querySelectorAll('.faq_list').forEach(initFaqList);
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
+  function boot() {
     init();
+    window.setTimeout(init, 300);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
   }
 
   window.FaqAccordion = {
@@ -1124,62 +1064,52 @@
 // ==========================================
 
 // ==========================================
-// START: Story Bento Featured Column Marker
+// START: Story Featured Marker (visual only)
 // ==========================================
 (function() {
   'use strict';
 
-  // Component instances can't take Designer classes/attrs, so mark the
-  // grid cell that uses the Featured sticky layout for CSS placement.
-  // Also set an explicit row span so featured owns the full column height
-  // (grid-row 1 / -1 only covers explicit rows, not implicit ones).
+  // Marks featured cards for CSS visuals only.
+  // Does NOT set grid-column / grid-row — Webflow owns grid placement.
+  const FEATURED_VARIANT_TOKEN = 'd6f6e90e';
+
+  function isFeaturedCell(cell) {
+    if (cell.classList.contains('story_featured-slot')) return true;
+
+    const content = cell.matches('.story_content')
+      ? cell
+      : cell.querySelector('.story_content');
+    if (!content) return false;
+
+    if (content.classList.contains('featured')) return true;
+
+    const roots = [cell, cell.querySelector('.story_item')].filter(Boolean);
+    if (
+      roots.some((node) =>
+        Array.from(node.classList).some(
+          (cls) => cls.includes(FEATURED_VARIANT_TOKEN) || cls === 'featured'
+        )
+      )
+    ) {
+      return true;
+    }
+
+    // Desktop Featured variant uses sticky story_content
+    return window.getComputedStyle(content).position === 'sticky';
+  }
+
   function markFeaturedStoryCells() {
-    const isDesktop = window.matchMedia('(min-width: 992px)').matches;
-
     document.querySelectorAll('.section_story .story_grid').forEach((grid) => {
-      const cells = Array.from(grid.children);
-      let featuredCell = null;
-
-      cells.forEach((cell) => {
-        cell.classList.remove('is-story-featured');
-        cell.style.removeProperty('grid-row');
-        cell.style.removeProperty('grid-column');
-
-        const content =
-          cell.matches('.story_content')
-            ? cell
-            : cell.querySelector('.story_content');
-
-        if (!content) return;
-
-        const style = window.getComputedStyle(content);
-        const isFeaturedLayout =
-          style.position === 'sticky' ||
-          content.classList.contains('featured') ||
-          cell.classList.contains('story_featured-slot');
-
-        if (isFeaturedLayout) {
-          cell.classList.add('is-story-featured');
-          featuredCell = cell;
-        }
+      Array.from(grid.children).forEach((cell) => {
+        cell.classList.toggle('is-story-featured', isFeaturedCell(cell));
       });
-
-      if (!featuredCell || !isDesktop) return;
-
-      // Desktop: 3 cols, featured takes 1 → remaining cards flow in 2 cols
-      const others = Math.max(0, cells.length - 1);
-      const rows = Math.max(1, Math.ceil(others / 2));
-      featuredCell.style.gridColumn = '1 / 2';
-      featuredCell.style.gridRow = '1 / span ' + rows;
     });
   }
 
   function init() {
     markFeaturedStoryCells();
-    // Variant styles can apply slightly after first paint
     window.setTimeout(markFeaturedStoryCells, 100);
     window.setTimeout(markFeaturedStoryCells, 500);
-    window.addEventListener('resize', markFeaturedStoryCells);
   }
 
   if (document.readyState === 'loading') {
@@ -1193,5 +1123,5 @@
   };
 })();
 // ==========================================
-// END: Story Bento Featured Column Marker
+// END: Story Featured Marker (visual only)
 // ==========================================
