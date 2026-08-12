@@ -585,3 +585,31 @@
   }
 }
 /* --- END: Why Image First-Load Scale --- */
+
+/* --- START: Process Steps Sticky Scroll --- */
+.section_process .process_box {
+  position: relative;
+  overflow: hidden;
+}
+
+.section_process .process_heading {
+  z-index: 3;
+}
+
+.section_process .process_center {
+  overflow: hidden;
+  position: relative;
+}
+
+.section_process .process_steps-track {
+  will-change: transform;
+}
+
+.section_process .process_step-wrapper {
+  will-change: opacity;
+}
+
+.section_process .process_step-wrapper.is-inactive {
+  pointer-events: none;
+}
+/* --- END: Process Steps Sticky Scroll --- */
