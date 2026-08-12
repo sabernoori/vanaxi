@@ -613,3 +613,247 @@
   pointer-events: none;
 }
 /* --- END: Process Steps Sticky Scroll --- */
+
+/* --- START: Story Card Hover (single logo) --- */
+.section_story .story_content {
+  overflow: hidden;
+}
+
+.section_story .story_gray-overlay {
+  transition: background-color 0.35s ease;
+  pointer-events: none;
+}
+
+.section_story .story_tag {
+  transition: color 0.35s ease, opacity 0.35s ease;
+}
+
+/* One black logo → white on hover via filter (no second image) */
+.section_story .story_logo,
+.section_story .story_logo-black {
+  position: absolute;
+  z-index: 3;
+  transition: filter 0.35s ease, opacity 0.35s ease;
+  filter: none;
+}
+
+.section_story .story_logo-white {
+  display: none !important;
+}
+
+.section_story .story_item:hover .story_gray-overlay,
+.section_story .story_item:focus-visible .story_gray-overlay {
+  background-color: rgba(0, 0, 0, 0.75);
+}
+
+.section_story .story_item:hover .story_tag,
+.section_story .story_item:focus-visible .story_tag {
+  color: #fff;
+  opacity: 1;
+}
+
+.section_story .story_item:hover .story_logo,
+.section_story .story_item:hover .story_logo-black,
+.section_story .story_item:focus-visible .story_logo,
+.section_story .story_item:focus-visible .story_logo-black {
+  /* Solid black PNG → solid white */
+  filter: brightness(0) invert(1);
+}
+
+.section_story .story_item.featured:hover .story_heading.featured,
+.section_story .story_item.featured:focus-visible .story_heading.featured {
+  color: #fff;
+}
+
+.section_story .story_video {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.section_story .story_video .story_video-el,
+.section_story .story_video video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* --- END: Story Card Hover (single logo) --- */
+
+/* --- START: Story Bento Grid — Featured Column --- */
+/*
+  Grid is RTL (3 cols). Column 1 = visual RIGHT.
+  Featured owns that column for the FULL grid height (1 / -1).
+  Dual headings: outer below media (normal), inner absolute in media (featured).
+*/
+.section_story .story_grid {
+  align-items: start;
+  grid-auto-rows: auto;
+}
+
+.section_story .story_grid > .is-story-featured,
+.section_story .story_featured-slot {
+  /* row span is set inline by script.js to match other cards (avoids empty rows) */
+  grid-column: 1 / 2;
+  grid-row: 1 / span 1;
+  align-self: stretch;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+}
+
+.section_story .story_grid > .is-story-featured .story_item,
+.section_story .story_featured-slot .story_item,
+.section_story .story_grid > .is-story-featured {
+  height: 100%;
+  min-height: 100%;
+  width: 100%;
+}
+
+.section_story .story_grid > .is-story-featured .story_content,
+.section_story .story_featured-slot .story_content {
+  position: sticky;
+  top: 5vh;
+  width: 100%;
+  height: 90vh;
+  max-height: 90vh;
+  aspect-ratio: auto;
+  overflow: hidden;
+}
+
+/* Dual headings: hide inner (in content) for normal cards */
+.section_story .story_content > .story_heading {
+  display: none;
+}
+
+/* Featured: show inner heading pinned in content; hide outer below */
+.section_story .story_grid > .is-story-featured .story_content > .story_heading,
+.section_story .story_featured-slot .story_content > .story_heading {
+  display: block;
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 4;
+  color: #fff;
+  max-width: 90%;
+}
+
+.section_story .story_grid > .is-story-featured > .story_heading,
+.section_story .story_grid > .is-story-featured .story_item > .story_heading,
+.section_story .story_featured-slot > .story_heading,
+.section_story .story_featured-slot .story_item > .story_heading {
+  display: none;
+}
+
+/* Featured: overlay always 75% black; logo/tag readable on dark */
+.section_story .story_grid > .is-story-featured .story_gray-overlay,
+.section_story .story_featured-slot .story_gray-overlay {
+  background-color: rgba(0, 0, 0, 0.75);
+}
+
+.section_story .story_grid > .is-story-featured .story_tag,
+.section_story .story_featured-slot .story_tag {
+  color: #fff;
+  opacity: 1;
+}
+
+.section_story .story_grid > .is-story-featured .story_logo,
+.section_story .story_grid > .is-story-featured .story_logo-black,
+.section_story .story_featured-slot .story_logo,
+.section_story .story_featured-slot .story_logo-black {
+  filter: brightness(0) invert(1);
+}
+
+.section_story .story_grid > .is-story-featured .story_video,
+.section_story .story_grid > .is-story-featured .story_video .story_video-el,
+.section_story .story_grid > .is-story-featured .story_video video,
+.section_story .story_featured-slot .story_video,
+.section_story .story_featured-slot .story_video .story_video-el,
+.section_story .story_featured-slot .story_video video {
+  transform: scale(1);
+  transition: transform 0.55s ease;
+  will-change: transform;
+}
+
+.section_story .story_grid > .is-story-featured:hover .story_video,
+.section_story .story_grid > .is-story-featured:hover .story_video .story_video-el,
+.section_story .story_grid > .is-story-featured:hover .story_video video,
+.section_story .story_grid > .is-story-featured:focus-visible .story_video,
+.section_story .story_grid > .is-story-featured:focus-visible .story_video .story_video-el,
+.section_story .story_grid > .is-story-featured:focus-visible .story_video video,
+.section_story .story_featured-slot:hover .story_video,
+.section_story .story_featured-slot:hover .story_video .story_video-el,
+.section_story .story_featured-slot:hover .story_video video {
+  transform: scale(1.08);
+}
+
+/* Hidden prop-bound field used by script.js for MP4 src */
+.section_story .story_video-url {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+@media screen and (max-width: 991px) {
+  .section_story .story_grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Fully release featured from desktop column/row placement */
+  .section_story .story_grid > .is-story-featured,
+  .section_story .story_featured-slot {
+    grid-column: auto !important;
+    grid-row: auto !important;
+    height: auto;
+    align-self: start;
+    min-height: 0;
+  }
+
+  .section_story .story_grid > .is-story-featured .story_item,
+  .section_story .story_featured-slot .story_item,
+  .section_story .story_grid > .is-story-featured {
+    height: auto;
+    min-height: 0;
+  }
+
+  .section_story .story_grid > .is-story-featured .story_content,
+  .section_story .story_featured-slot .story_content {
+    position: relative;
+    top: auto;
+    height: auto;
+    max-height: none;
+    aspect-ratio: 1 / 1;
+  }
+
+  /* Mobile: use outer heading like normal cards */
+  .section_story .story_grid > .is-story-featured .story_content > .story_heading,
+  .section_story .story_featured-slot .story_content > .story_heading {
+    display: none;
+  }
+
+  .section_story .story_grid > .is-story-featured > .story_heading,
+  .section_story .story_grid > .is-story-featured .story_item > .story_heading,
+  .section_story .story_featured-slot > .story_heading,
+  .section_story .story_featured-slot .story_item > .story_heading {
+    display: block;
+  }
+
+  .section_story .story_grid > .is-story-featured:hover .story_video,
+  .section_story .story_grid > .is-story-featured:hover .story_video .story_video-el,
+  .section_story .story_grid > .is-story-featured:hover .story_video video,
+  .section_story .story_featured-slot:hover .story_video,
+  .section_story .story_featured-slot:hover .story_video .story_video-el,
+  .section_story .story_featured-slot:hover .story_video video {
+    transform: none;
+  }
+}
+/* --- END: Story Bento Grid — Featured Column --- */

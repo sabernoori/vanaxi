@@ -1053,3 +1053,145 @@
 // ==========================================
 // END: FAQ Accordion
 // ==========================================
+
+// ==========================================
+// START: Story Card Background Videos
+// ==========================================
+(function() {
+  'use strict';
+
+  // Sample MP4s (Webflow BG Video can't use YouTube URLs)
+  // Swap these or set data-video-src on each .story_video
+  const STORY_VIDEO_FALLBACKS = [
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
+  ];
+
+  function mountStoryVideos() {
+    const hosts = document.querySelectorAll('.section_story .story_video');
+    hosts.forEach((host, index) => {
+      if (host.querySelector('video.story_video-el')) return;
+
+      const urlField = host.closest('.story_item')?.querySelector('.story_video-url');
+      const urlFromProp = urlField ? (urlField.textContent || '').trim() : '';
+
+      const card = host.closest('.story_item') || host.closest('[data-video-src]');
+      const src =
+        urlFromProp ||
+        host.getAttribute('data-video-src') ||
+        (card && card.getAttribute('data-video-src')) ||
+        STORY_VIDEO_FALLBACKS[index % STORY_VIDEO_FALLBACKS.length];
+
+      if (!src) return;
+
+      const video = document.createElement('video');
+      video.className = 'story_video-el';
+      video.src = src;
+      video.muted = true;
+      video.loop = true;
+      video.autoplay = true;
+      video.playsInline = true;
+      video.setAttribute('playsinline', '');
+      video.setAttribute('muted', '');
+      video.setAttribute('aria-hidden', 'true');
+
+      host.appendChild(video);
+
+      const play = video.play();
+      if (play && typeof play.catch === 'function') {
+        play.catch(function() {});
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mountStoryVideos);
+  } else {
+    mountStoryVideos();
+  }
+
+  window.StoryVideos = {
+    refresh: mountStoryVideos
+  };
+})();
+// ==========================================
+// END: Story Card Background Videos
+// ==========================================
+
+// ==========================================
+// START: Story Bento Featured Column Marker
+// ==========================================
+(function() {
+  'use strict';
+
+  // Component instances can't take Designer classes/attrs, so mark the
+  // grid cell that uses the Featured sticky layout for CSS placement.
+  // Also set an explicit row span so featured owns the full column height
+  // (grid-row 1 / -1 only covers explicit rows, not implicit ones).
+  function markFeaturedStoryCells() {
+    const isDesktop = window.matchMedia('(min-width: 992px)').matches;
+
+    document.querySelectorAll('.section_story .story_grid').forEach((grid) => {
+      const cells = Array.from(grid.children);
+      let featuredCell = null;
+
+      cells.forEach((cell) => {
+        cell.classList.remove('is-story-featured');
+        cell.style.removeProperty('grid-row');
+        cell.style.removeProperty('grid-column');
+
+        const content =
+          cell.matches('.story_content')
+            ? cell
+            : cell.querySelector('.story_content');
+
+        if (!content) return;
+
+        const style = window.getComputedStyle(content);
+        const isFeaturedLayout =
+          style.position === 'sticky' ||
+          content.classList.contains('featured') ||
+          cell.classList.contains('story_featured-slot');
+
+        if (isFeaturedLayout) {
+          cell.classList.add('is-story-featured');
+          featuredCell = cell;
+        }
+      });
+
+      if (!featuredCell || !isDesktop) return;
+
+      // Desktop: 3 cols, featured takes 1 → remaining cards flow in 2 cols
+      const others = Math.max(0, cells.length - 1);
+      const rows = Math.max(1, Math.ceil(others / 2));
+      featuredCell.style.gridColumn = '1 / 2';
+      featuredCell.style.gridRow = '1 / span ' + rows;
+    });
+  }
+
+  function init() {
+    markFeaturedStoryCells();
+    // Variant styles can apply slightly after first paint
+    window.setTimeout(markFeaturedStoryCells, 100);
+    window.setTimeout(markFeaturedStoryCells, 500);
+    window.addEventListener('resize', markFeaturedStoryCells);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  window.StoryBentoGrid = {
+    refresh: markFeaturedStoryCells
+  };
+})();
+// ==========================================
+// END: Story Bento Featured Column Marker
+// ==========================================
