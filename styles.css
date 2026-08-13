@@ -1103,9 +1103,7 @@ textarea:focus:not(:focus-visible) {
   outline-offset: 3px;
 }
 
-.burger-icon,
-.close-icon,
-.back-icon,
+/* Touch targets for text/links only — do not force 44px on Webflow nav icons */
 .seo_link,
 .faq_question-group,
 .footer_social-item {
