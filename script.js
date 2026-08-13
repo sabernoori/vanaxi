@@ -10,7 +10,8 @@
   const MenuState = {
     isOpen: false,
     currentSubMenu: null,
-    isAnimating: false
+    isAnimating: false,
+    lastFocus: null
   };
 
   // DOM Elements
@@ -83,6 +84,24 @@
     return true;
   }
 
+  function syncMenuAria(isOpen) {
+    if (elements.burgerIcon) {
+      elements.burgerIcon.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      elements.burgerIcon.setAttribute(
+        'aria-label',
+        isOpen ? 'بستن منو' : 'باز کردن منو'
+      );
+    }
+    if (elements.menuWrapper) {
+      elements.menuWrapper.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+      if (isOpen) {
+        elements.menuWrapper.removeAttribute('inert');
+      } else {
+        elements.menuWrapper.setAttribute('inert', '');
+      }
+    }
+  }
+
   /**
    * Open the mobile menu with animations
    */
@@ -94,9 +113,11 @@
 
     MenuState.isAnimating = true;
     MenuState.isOpen = true;
+    MenuState.lastFocus = document.activeElement;
 
     // Add classes for animations (CSS handles visibility)
     elements.menuWrapper.classList.add('is-visible');
+    syncMenuAria(true);
 
     // Small delay to ensure visibility is applied before animation
     requestAnimationFrame(() => {
@@ -109,6 +130,12 @@
 
       // Reset any sub-menu state
       closeSubMenu(false);
+
+      // Move focus into the open menu
+      const firstFocusable = elements.menuWrapper.querySelector(
+        'a[href], button, [tabindex]:not([tabindex="-1"])'
+      );
+      if (firstFocusable) firstFocusable.focus({ preventScroll: true });
 
       // Set animation complete
       setTimeout(() => {
@@ -132,6 +159,7 @@
     // Remove open class to trigger close animation
     elements.navBurger.classList.remove('is-menu-open');
     elements.menuWrapper.classList.remove('is-open');
+    syncMenuAria(false);
 
     // Re-enable body scroll
     document.body.style.overflow = '';
@@ -150,6 +178,13 @@
     toggleNavBurgerIcons(false);
     toggleNavAccountIcons(false);
     toggleLogoAndTitle(null, false);
+
+    // Restore focus to the control that opened the menu
+    if (MenuState.lastFocus && typeof MenuState.lastFocus.focus === 'function') {
+      MenuState.lastFocus.focus({ preventScroll: true });
+    } else if (elements.burgerIcon) {
+      elements.burgerIcon.focus({ preventScroll: true });
+    }
 
     // After animation completes, reset everything completely
     setTimeout(() => {
@@ -478,41 +513,42 @@
   /**
    * Set up event listeners
    */
+  function bindActivate(el, handler) {
+    if (!el) return;
+    el.addEventListener('click', handler);
+    el.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      handler(event);
+    });
+  }
+
   function setupEventListeners() {
-    // Burger icon click
-    if (elements.burgerIcon) {
-      elements.burgerIcon.addEventListener('click', (e) => {
-        e.preventDefault();
-        toggleMenu();
-      });
-    }
+    // Burger icon click / keyboard
+    bindActivate(elements.burgerIcon, (e) => {
+      e.preventDefault();
+      toggleMenu();
+    });
 
-    // Close icon click
-    if (elements.closeIconMain) {
-      elements.closeIconMain.addEventListener('click', (e) => {
-        e.preventDefault();
-        closeMenu();
-      });
-    }
+    // Close icon click / keyboard
+    bindActivate(elements.closeIconMain, (e) => {
+      e.preventDefault();
+      closeMenu();
+    });
 
-    // Back icon click
-    if (elements.backIcon) {
-      elements.backIcon.addEventListener('click', (e) => {
-        e.preventDefault();
-        handleBackClick();
-      });
-    }
+    // Back icon click / keyboard
+    bindActivate(elements.backIcon, (e) => {
+      e.preventDefault();
+      handleBackClick();
+    });
 
     // Close layers icon click (in nav_account-mob) - closes entire menu
     const closeLayersIcon = document.querySelector('[icon-action="close-layers"]');
-    if (closeLayersIcon) {
-      closeLayersIcon.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        // Close the entire menu and reset everything
-        closeMenu();
-      });
-    }
+    bindActivate(closeLayersIcon, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeMenu();
+    });
 
     // Menu items clicks
     Object.values(elements.menuItems).forEach(item => {
@@ -547,6 +583,11 @@
       console.error('Menu: Could not initialize - missing elements');
       return;
     }
+
+    if (elements.menuWrapper && !elements.menuWrapper.id) {
+      elements.menuWrapper.id = 'mobile-menu';
+    }
+    syncMenuAria(false);
 
     setupEventListeners();
     setupScrollHide();
@@ -782,6 +823,13 @@
       setItemClasses(state.items[next], true);
     }
 
+    state.items.forEach((entry, i) => {
+      if (!entry.el) return;
+      const active = i === state.activeIndex;
+      entry.el.setAttribute('aria-pressed', active ? 'true' : 'false');
+      entry.el.setAttribute('aria-current', active ? 'true' : 'false');
+    });
+
     const progressAmount = typeof opts.progress === 'number' ? opts.progress : (previous === next ? undefined : 0);
     if (typeof progressAmount === 'number' && state.items[next]) {
       setProgressFill(state.items[next].progress, progressAmount);
@@ -812,6 +860,7 @@
       entry.el.addEventListener('click', onItemClick);
       entry.el.setAttribute('role', 'button');
       entry.el.setAttribute('tabindex', '0');
+      entry.el.setAttribute('aria-pressed', 'false');
       entry.el.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
@@ -1148,8 +1197,16 @@
       video.setAttribute('playsinline', '');
       video.setAttribute('muted', '');
       video.setAttribute('aria-hidden', 'true');
+      video.setAttribute('tabindex', '-1');
 
       host.appendChild(video);
+
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduceMotion) {
+        video.removeAttribute('autoplay');
+        video.pause();
+        return;
+      }
 
       const play = video.play();
       if (play && typeof play.catch === 'function') {
@@ -1402,4 +1459,102 @@
 })();
 // ==========================================
 // END: SEO Show More / Less
+// ==========================================
+
+// ==========================================
+// START: Accessibility Enhancements
+// ==========================================
+(function() {
+  'use strict';
+
+  const SOCIAL_LABELS = [
+    { test: /instagram|instagr\.am/i, label: 'اینستاگرام ونکسی' },
+    { test: /linkedin|lnkd\.in/i, label: 'لینکدین ونکسی' },
+    { test: /t\.me|telegram/i, label: 'تلگرام ونکسی' },
+    { test: /x\.com|twitter/i, label: 'اکس (توییتر) ونکسی' },
+    { test: /youtube|youtu\.be/i, label: 'یوتیوب ونکسی' },
+    { test: /whatsapp|wa\.me/i, label: 'واتساپ ونکسی' },
+    { test: /aparat/i, label: 'آپارات ونکسی' }
+  ];
+
+  function prefersReducedMotion() {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  function ensureDocumentLang() {
+    const html = document.documentElement;
+    if (!html) return;
+    // Site content is Persian; keep lang aligned for AT / SEO
+    if (!html.lang || html.lang.toLowerCase() === 'en' || html.lang.toLowerCase() === 'en-us') {
+      html.lang = 'fa';
+    }
+    // Do not set dir=rtl on <html> — Webflow layout owns direction
+  }
+
+  function injectSkipLink() {
+    if (document.querySelector('.skip-link')) return;
+    const main = document.getElementById('main-content') || document.querySelector('main');
+    if (!main) return;
+    if (!main.id) main.id = 'main-content';
+
+    const link = document.createElement('a');
+    link.className = 'skip-link';
+    link.href = '#' + main.id;
+    link.textContent = 'پرش به محتوای اصلی';
+    document.body.insertBefore(link, document.body.firstChild);
+  }
+
+  function hideDecorativeSvgs() {
+    document.querySelectorAll('.icon-24 svg, .burger-icon svg, .close-icon svg, .back-icon svg, .faq_icon svg').forEach((svg) => {
+      svg.setAttribute('aria-hidden', 'true');
+      svg.setAttribute('focusable', 'false');
+    });
+  }
+
+  function labelSocialLinks() {
+    document.querySelectorAll('.footer_social-item').forEach((link, index) => {
+      const href = link.getAttribute('href') || '';
+      const match = SOCIAL_LABELS.find((item) => item.test.test(href));
+      const current = link.getAttribute('aria-label') || '';
+      const isGeneric = !current || /^شبکه اجتماعی\s*\d+$/i.test(current);
+      if (match) {
+        link.setAttribute('aria-label', match.label);
+      } else if (isGeneric) {
+        link.setAttribute('aria-label', 'شبکه اجتماعی ' + (index + 1));
+      }
+      if (/^https?:/i.test(href)) {
+        link.setAttribute('rel', 'noopener noreferrer');
+        if (!link.getAttribute('target')) link.setAttribute('target', '_blank');
+      }
+    });
+  }
+
+  function enhanceStoryCards() {
+    document.querySelectorAll('.section_story .story_item').forEach((card) => {
+      const link = card.querySelector('a[href]');
+      if (link) return;
+      if (!card.hasAttribute('tabindex')) card.setAttribute('tabindex', '0');
+    });
+  }
+
+  function init() {
+    ensureDocumentLang();
+    injectSkipLink();
+    hideDecorativeSvgs();
+    labelSocialLinks();
+    enhanceStoryCards();
+
+    if (prefersReducedMotion()) {
+      document.documentElement.classList.add('reduce-motion');
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+// ==========================================
+// END: Accessibility Enhancements
 // ==========================================

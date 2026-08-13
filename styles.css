@@ -1051,4 +1051,106 @@
 }
 /* --- END: SEO Show More / Less --- */
 
+/* --- START: Accessibility Foundation --- */
+.skip-link {
+  position: absolute;
+  inset-inline-start: 1rem;
+  top: 0;
+  z-index: 1000000;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: #111;
+  color: #fff;
+  font-size: 0.875rem;
+  line-height: 1.2;
+  text-decoration: none;
+  transform: translateY(-150%);
+  transition: transform 0.2s ease;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0.75rem);
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+a:focus:not(:focus-visible),
+button:focus:not(:focus-visible),
+[role="button"]:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+select:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.button:focus-visible,
+.text-link-wrapper:focus-visible,
+.seo_link:focus-visible,
+.faq_question-group:focus-visible,
+.services_suit-item:focus-visible,
+.footer_link:focus-visible,
+.footer_social-item:focus-visible,
+.burger-icon:focus-visible,
+.close-icon:focus-visible,
+.back-icon:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.burger-icon,
+.close-icon,
+.back-icon,
+.seo_link,
+.faq_question-group,
+.footer_social-item {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.burger-icon,
+.close-icon,
+.back-icon,
+.seo_link,
+.faq_question-group {
+  cursor: pointer;
+}
+
+.menu_open-wrapper[aria-hidden="true"] {
+  visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  .navbar,
+  .menu_open-wrapper,
+  .menu_open-box,
+  .menu_open,
+  .seo_text,
+  .seo_gradient,
+  .seo_link,
+  .seo_link .icon-24,
+  .footer_link,
+  .footer_social-item,
+  .button {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .footer_cloud1,
+  .footer_cloud2 {
+    animation: none !important;
+  }
+}
+/* --- END: Accessibility Foundation --- */
+
 

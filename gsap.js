@@ -7,6 +7,8 @@
 
   gsap.registerPlugin(ScrollTrigger);
 
+  const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   // ==========================================
   // START: Desktop Services ScrollTrigger
   // ==========================================
@@ -143,6 +145,8 @@
   // START: Why Image First-Load Scale Down
   // ==========================================
   function initWhyImgScaleDown() {
+    if (REDUCE_MOTION) return;
+
     ScrollTrigger.matchMedia({
       // Mobile / tablet only
       '(max-width: 991px)': function() {
@@ -370,6 +374,13 @@
   //              fade OUT when content top hits clip top
   // ==========================================
   function initWhyCenterFadeIn() {
+    if (REDUCE_MOTION) {
+      document.querySelectorAll('.section_why .why_in-center-content').forEach((el) => {
+        el.style.opacity = '1';
+      });
+      return;
+    }
+
     ScrollTrigger.matchMedia({
       '(min-width: 992px)': function() {
         const centers = gsap.utils.toArray('.section_why .why_in-center');
