@@ -5,9 +5,93 @@
 (function() {
   'use strict';
 
+  if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
+    console.warn('GSAP/ScrollTrigger not found — animations skipped');
+    return;
+  }
+
   gsap.registerPlugin(ScrollTrigger);
 
   const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ==========================================
+  // START: Lenis Smooth Scroll + ScrollTrigger Sync
+  // ==========================================
+  // Uses Lenis (footer CDN) with GSAP ticker — not ScrollSmoother (Club plugin).
+  function initLenisSmoothScroll() {
+    if (window.__vanaxiLenis) return window.__vanaxiLenis;
+    if (REDUCE_MOTION) return null;
+    if (typeof Lenis === 'undefined') {
+      console.warn('GSAP: Lenis not loaded — native scroll only');
+      return null;
+    }
+
+    const lenis = new Lenis({
+      // Higher duration = slower/smoother settle. Lower wheelMultiplier = less distance per tick.
+      duration: 1.9,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      wheelMultiplier: 0.85,
+      touchMultiplier: 1.35,
+      infinite: false
+    });
+
+    lenis.on('scroll', ScrollTrigger.update);
+
+    gsap.ticker.add((time) => {
+      lenis.raf(time * 1000);
+    });
+    gsap.ticker.lagSmoothing(0);
+
+    window.lenis = lenis;
+    window.__vanaxiLenis = lenis;
+
+    // Keep ScrollTrigger measurements in sync after fonts/images settle
+    requestAnimationFrame(() => ScrollTrigger.refresh());
+    window.addEventListener('load', () => ScrollTrigger.refresh(), { once: true });
+
+    return lenis;
+  }
+
+  function getScrollY() {
+    if (window.lenis && typeof window.lenis.scroll === 'number') {
+      return window.lenis.scroll;
+    }
+    return window.pageYOffset || document.documentElement.scrollTop || 0;
+  }
+
+  function smoothScrollTo(y, options) {
+    const opts = options || {};
+    if (window.lenis && typeof window.lenis.scrollTo === 'function') {
+      window.lenis.scrollTo(y, {
+        duration: opts.duration != null ? opts.duration : 1.1,
+        easing: opts.easing || ((t) => 1 - Math.pow(1 - t, 3)),
+        immediate: !!opts.immediate,
+        onComplete: opts.onComplete
+      });
+      return;
+    }
+
+    if (opts.immediate) {
+      window.scrollTo(0, y);
+      if (opts.onComplete) opts.onComplete();
+      return;
+    }
+
+    const proxy = { y: getScrollY() };
+    gsap.to(proxy, {
+      duration: opts.duration != null ? opts.duration : 0.9,
+      y: y,
+      ease: 'power2.inOut',
+      onUpdate: () => window.scrollTo(0, proxy.y),
+      onComplete: opts.onComplete
+    });
+  }
+  // ==========================================
+  // END: Lenis Smooth Scroll + ScrollTrigger Sync
+  // ==========================================
 
   // ==========================================
   // START: Desktop Services ScrollTrigger
@@ -40,7 +124,7 @@
 
     function getScrollBounds() {
       const rect = longWrapper.getBoundingClientRect();
-      const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+      const scrollY = getScrollY();
       const start = rect.top + scrollY;
       const end = start + longWrapper.offsetHeight - window.innerHeight;
       return { start: start, end: Math.max(start + 1, end) };
@@ -61,17 +145,8 @@
       isProgrammaticScroll = true;
       api.setFromScroll(clamped, 0);
 
-      const scrollProxy = {
-        y: window.pageYOffset || document.documentElement.scrollTop
-      };
-
-      gsap.to(scrollProxy, {
-        duration: 0.9,
-        y: targetY,
-        ease: 'power2.inOut',
-        onUpdate: () => {
-          window.scrollTo(0, scrollProxy.y);
-        },
+      smoothScrollTo(targetY, {
+        duration: 1.05,
         onComplete: () => {
           isProgrammaticScroll = false;
           ScrollTrigger.update();
@@ -482,22 +557,21 @@
   // ==========================================
 
   function init() {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => {
-          initWhyImgScaleDown();
-          initWhyCenterFadeIn();
-          initServicesDesktopScroll();
-          initProcessStepsScroll();
-        }, 100);
-      });
-    } else {
+    const boot = () => {
+      initLenisSmoothScroll();
       setTimeout(() => {
         initWhyImgScaleDown();
         initWhyCenterFadeIn();
         initServicesDesktopScroll();
         initProcessStepsScroll();
+        ScrollTrigger.refresh();
       }, 100);
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else {
+      boot();
     }
   }
 
@@ -508,6 +582,7 @@
     refreshWhyImgScale: initWhyImgScaleDown,
     refreshWhyCenterFade: initWhyCenterFadeIn,
     refreshProcessSteps: initProcessStepsScroll,
+    refreshLenis: initLenisSmoothScroll,
     refresh: () => ScrollTrigger.refresh()
   };
 

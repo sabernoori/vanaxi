@@ -125,8 +125,11 @@
       elements.navBurger.classList.add('is-menu-open');
       elements.menuWrapper.classList.add('is-open');
 
-      // Prevent body scroll
+      // Prevent body scroll (+ pause Lenis if active)
       document.body.style.overflow = 'hidden';
+      if (window.lenis && typeof window.lenis.stop === 'function') {
+        window.lenis.stop();
+      }
 
       // Reset any sub-menu state
       closeSubMenu(false);
@@ -161,8 +164,11 @@
     elements.menuWrapper.classList.remove('is-open');
     syncMenuAria(false);
 
-    // Re-enable body scroll
+    // Re-enable body scroll (+ resume Lenis if active)
     document.body.style.overflow = '';
+    if (window.lenis && typeof window.lenis.start === 'function') {
+      window.lenis.start();
+    }
 
     // Add class for fade-only closing (no slide)
     if (elements.servicesMenu) {
