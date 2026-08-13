@@ -364,9 +364,10 @@
   //   .why_in-center-fixed  → position:fixed; inset:0 (full viewport, flex-centered)
   //   .why_in-center-content→ the text block sitting in screen center
   //
-  // The clip window (.why_in-center) scrolls over the fixed text.
-  // Fade must run while that clip is crossing the text — not while the
-  // text is still fully above the mask (where opacity changes are invisible).
+  // Scroll down: fade IN when content bottom hits clip top
+  //              fade OUT when content bottom hits clip bottom
+  // Scroll up:   fade IN when content top hits clip bottom
+  //              fade OUT when content top hits clip top
   // ==========================================
   function initWhyCenterFadeIn() {
     ScrollTrigger.matchMedia({
@@ -374,71 +375,93 @@
         const centers = gsap.utils.toArray('.section_why .why_in-center');
         if (!centers.length) return;
 
-        const tweens = [];
+        const cleanups = [];
+
+        // easeOutCubic: 1 - (1 - t)^3
+        const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
         centers.forEach((center) => {
           const content = center.querySelector('.why_in-center-content');
           if (!content) return;
 
-          // Clear any previous opacity on the full-viewport shell
           const fixed = center.querySelector('.why_in-center-fixed');
           if (fixed) gsap.set(fixed, { clearProps: 'opacity' });
 
           gsap.set(content, { opacity: 0 });
 
-          const tween = gsap.fromTo(
-            content,
-            { opacity: 0 },
-            {
-              opacity: 1,
-              ease: 'none',
-              scrollTrigger: {
-                trigger: center,
-                // Start: clip top meets content bottom.
-                // Content is viewport-centered via fixed flex, so its bottom
-                // is a stable viewport line (not tied to the moving clip).
-                start: () => {
-                  const vh = window.innerHeight;
-                  // Prefer live measure; fall back to geometric center
-                  const rect = content.getBoundingClientRect();
-                  let contentBottom;
-                  if (rect.height > 1) {
-                    contentBottom = rect.bottom;
-                  } else {
-                    contentBottom = (vh + content.offsetHeight) / 2;
-                  }
-                  return 'top ' + contentBottom + 'px';
-                },
-                // End: after 30% of why_in-center height.
-                // Floor at 30vh so the fade is perceptible (why_in-center is
-                // only ~24rem from the image column — 30% is still short).
-                end: () => {
-                  const fromCenter = center.offsetHeight * 0.35;
-                  const minVisible = window.innerHeight * 0.35;
-                  return '+=' + Math.max(fromCenter, minVisible);
-                },
-                scrub: true,
-                invalidateOnRefresh: true
-              }
-            }
-          );
+          const applyOpacity = () => {
+            const centerRect = center.getBoundingClientRect();
+            const contentRect = content.getBoundingClientRect();
+            const vh = window.innerHeight;
 
-          tweens.push(tween);
+            const contentTop =
+              contentRect.height > 1
+                ? contentRect.top
+                : (vh - content.offsetHeight) / 2;
+            const contentBottom =
+              contentRect.height > 1
+                ? contentRect.bottom
+                : (vh + content.offsetHeight) / 2;
+
+            const fadeDistance = Math.max(
+              center.offsetHeight * 0.35,
+              vh * 0.35
+            );
+
+            // Fade IN from top (scroll down): content bottom vs clip top
+            const enterTop = gsap.utils.clamp(
+              0,
+              1,
+              (contentBottom - centerRect.top) / fadeDistance
+            );
+
+            // Fade OUT from bottom (scroll down): content bottom vs clip bottom
+            // Starts at 1 when bottoms align; reaches 0 after fadeDistance
+            const leaveBottom = gsap.utils.clamp(
+              0,
+              1,
+              (centerRect.bottom - contentBottom + fadeDistance) / fadeDistance
+            );
+
+            // Fade IN from bottom (scroll up): content top vs clip bottom
+            const enterBottom = gsap.utils.clamp(
+              0,
+              1,
+              (centerRect.bottom - contentTop) / fadeDistance
+            );
+
+            // Fade OUT from top (scroll up): content top vs clip top
+            const leaveTop = gsap.utils.clamp(
+              0,
+              1,
+              (contentTop - centerRect.top + fadeDistance) / fadeDistance
+            );
+
+            const progress = Math.min(enterTop, leaveBottom, enterBottom, leaveTop);
+            gsap.set(content, { opacity: easeOutCubic(progress) });
+          };
+
+          const st = ScrollTrigger.create({
+            trigger: center,
+            start: 'top bottom',
+            end: 'bottom top',
+            invalidateOnRefresh: true,
+            onUpdate: applyOpacity,
+            onRefresh: applyOpacity
+          });
+
+          applyOpacity();
+          cleanups.push(() => {
+            st.kill();
+            gsap.set(content, { clearProps: 'opacity' });
+            if (fixed) gsap.set(fixed, { clearProps: 'opacity' });
+          });
         });
 
         ScrollTrigger.refresh();
 
         return function() {
-          tweens.forEach((tween) => {
-            if (tween.scrollTrigger) tween.scrollTrigger.kill();
-            tween.kill();
-          });
-          centers.forEach((center) => {
-            const content = center.querySelector('.why_in-center-content');
-            const fixed = center.querySelector('.why_in-center-fixed');
-            if (content) gsap.set(content, { clearProps: 'opacity' });
-            if (fixed) gsap.set(fixed, { clearProps: 'opacity' });
-          });
+          cleanups.forEach((fn) => fn());
         };
       }
     });
