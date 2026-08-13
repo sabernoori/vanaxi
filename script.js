@@ -1012,7 +1012,12 @@
     'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
   ];
 
+  const DESKTOP_MQ = '(min-width: 992px)';
+
   function mountStoryVideos() {
+    // Under 991: Webflow owns story — do not inject/control videos locally
+    if (!window.matchMedia(DESKTOP_MQ).matches) return;
+
     const hosts = document.querySelectorAll('.section_story .story_video');
     hosts.forEach((host, index) => {
       if (host.querySelector('video.story_video-el')) return;
@@ -1049,10 +1054,15 @@
     });
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', mountStoryVideos);
-  } else {
+  function initStoryVideos() {
     mountStoryVideos();
+    window.addEventListener('resize', mountStoryVideos);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initStoryVideos);
+  } else {
+    initStoryVideos();
   }
 
   window.StoryVideos = {
@@ -1064,14 +1074,15 @@
 // ==========================================
 
 // ==========================================
-// START: Story Featured Marker (visual only)
+// START: Story Featured Desktop Pin
 // ==========================================
 (function() {
   'use strict';
 
-  // Marks featured cards for CSS visuals only.
-  // Does NOT set grid-column / grid-row — Webflow owns grid placement.
+  // Desktop only (≥992). Under 991: clear any leftover markers/placement
+  // and do nothing — Webflow owns tablet/mobile story layout.
   const FEATURED_VARIANT_TOKEN = 'd6f6e90e';
+  const DESKTOP_MQ = '(min-width: 992px)';
 
   function isFeaturedCell(cell) {
     if (cell.classList.contains('story_featured-slot')) return true;
@@ -1094,22 +1105,44 @@
       return true;
     }
 
-    // Desktop Featured variant uses sticky story_content
     return window.getComputedStyle(content).position === 'sticky';
   }
 
-  function markFeaturedStoryCells() {
+  function clearCell(cell) {
+    cell.classList.remove('is-story-featured');
+    cell.style.removeProperty('grid-row');
+    cell.style.removeProperty('grid-column');
+  }
+
+  function pinFeaturedStoryCells() {
+    const isDesktop = window.matchMedia(DESKTOP_MQ).matches;
+
     document.querySelectorAll('.section_story .story_grid').forEach((grid) => {
-      Array.from(grid.children).forEach((cell) => {
-        cell.classList.toggle('is-story-featured', isFeaturedCell(cell));
+      const cells = Array.from(grid.children);
+      let featuredCell = null;
+
+      cells.forEach((cell) => {
+        clearCell(cell);
+        if (!isDesktop) return;
+        if (!isFeaturedCell(cell)) return;
+        cell.classList.add('is-story-featured');
+        featuredCell = cell;
       });
+
+      if (!featuredCell || !isDesktop) return;
+
+      const others = Math.max(0, cells.length - 1);
+      const rows = Math.max(1, Math.ceil(others / 2));
+      featuredCell.style.gridColumn = '1 / 2';
+      featuredCell.style.gridRow = '1 / span ' + rows;
     });
   }
 
   function init() {
-    markFeaturedStoryCells();
-    window.setTimeout(markFeaturedStoryCells, 100);
-    window.setTimeout(markFeaturedStoryCells, 500);
+    pinFeaturedStoryCells();
+    window.setTimeout(pinFeaturedStoryCells, 100);
+    window.setTimeout(pinFeaturedStoryCells, 500);
+    window.addEventListener('resize', pinFeaturedStoryCells);
   }
 
   if (document.readyState === 'loading') {
@@ -1119,9 +1152,9 @@
   }
 
   window.StoryBentoGrid = {
-    refresh: markFeaturedStoryCells
+    refresh: pinFeaturedStoryCells
   };
 })();
 // ==========================================
-// END: Story Featured Marker (visual only)
+// END: Story Featured Desktop Pin
 // ==========================================

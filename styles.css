@@ -617,224 +617,120 @@
 }
 /* --- END: Process Steps Sticky Scroll --- */
 
-/* --- START: Story Card Hover (single logo) --- */
-.section_story .story_content {
-  overflow: hidden;
-}
-
-.section_story .story_gray-overlay {
-  transition: background-color 0.35s ease;
-  pointer-events: none;
-}
-
-.section_story .story_tag {
-  transition: color 0.35s ease, opacity 0.35s ease;
-}
-
-/* One black logo → white on hover via filter (no second image) */
-.section_story .story_logo,
-.section_story .story_logo-black {
-  position: absolute;
-  z-index: 3;
-  transition: filter 0.35s ease, opacity 0.35s ease;
-  filter: none;
-}
-
-.section_story .story_logo-white {
-  display: none !important;
-}
-
-.section_story .story_item:hover .story_gray-overlay,
-.section_story .story_item:focus-visible .story_gray-overlay {
-  background-color: rgba(0, 0, 0, 0.75);
-}
-
-.section_story .story_item:hover .story_tag,
-.section_story .story_item:focus-visible .story_tag {
-  color: #fff;
-  opacity: 1;
-}
-
-.section_story .story_item:hover .story_logo,
-.section_story .story_item:hover .story_logo-black,
-.section_story .story_item:focus-visible .story_logo,
-.section_story .story_item:focus-visible .story_logo-black {
-  /* Solid black PNG → solid white */
-  filter: brightness(0) invert(1);
-}
-
-.section_story .story_item.featured:hover .story_heading.featured,
-.section_story .story_item.featured:focus-visible .story_heading.featured {
-  color: #fff;
-}
-
-.section_story .story_video {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.section_story .story_video .story_video-el,
-.section_story .story_video video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-/* --- END: Story Card Hover (single logo) --- */
-
-/* --- START: Story Featured Visuals (no grid placement) --- */
+/* --- START: Story Card — Desktop only (≥992) --- */
 /*
-  Grid columns/rows are owned entirely by Webflow (story_grid + Featured variant).
-  This block only handles featured visuals: sticky media, dual headings, overlay, hover.
-  .is-story-featured is a class marker from script.js (not a grid rule).
+  Nothing in this block applies under 991px — Webflow owns tablet/mobile
+  story grid, components, and children. Desktop pin + hover + featured visuals only.
 */
-.section_story .story_item.featured .story_content,
-.section_story .is-story-featured .story_content,
-.section_story .story_featured-slot .story_content {
-  position: sticky;
-  top: 5vh;
-  width: 100%;
-  height: 90vh;
-  max-height: 90vh;
-  aspect-ratio: auto;
-  overflow: hidden;
-}
-
-/* Dual headings: hide inner (in content) for normal cards */
-.section_story .story_content > .story_heading {
-  display: none;
-}
-
-/* Featured: show inner heading pinned in content; hide outer below */
-.section_story .story_item.featured .story_content > .story_heading,
-.section_story .is-story-featured .story_content > .story_heading,
-.section_story .story_featured-slot .story_content > .story_heading {
-  display: block;
-  position: absolute;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 4;
-  color: #fff;
-  max-width: 90%;
-}
-
-.section_story .story_item.featured > .story_heading,
-.section_story .is-story-featured > .story_heading,
-.section_story .is-story-featured .story_item > .story_heading,
-.section_story .story_featured-slot > .story_heading,
-.section_story .story_featured-slot .story_item > .story_heading {
-  display: none;
-}
-
-/* Featured: overlay always 75% black; logo/tag readable on dark */
-.section_story .story_item.featured .story_gray-overlay,
-.section_story .is-story-featured .story_gray-overlay,
-.section_story .story_featured-slot .story_gray-overlay {
-  background-color: rgba(0, 0, 0, 0.75);
-}
-
-.section_story .story_item.featured .story_tag,
-.section_story .is-story-featured .story_tag,
-.section_story .story_featured-slot .story_tag {
-  color: #fff;
-  opacity: 1;
-}
-
-.section_story .story_item.featured .story_logo,
-.section_story .story_item.featured .story_logo-black,
-.section_story .is-story-featured .story_logo,
-.section_story .is-story-featured .story_logo-black,
-.section_story .story_featured-slot .story_logo,
-.section_story .story_featured-slot .story_logo-black {
-  filter: brightness(0) invert(1);
-}
-
-.section_story .story_item.featured .story_video,
-.section_story .story_item.featured .story_video .story_video-el,
-.section_story .story_item.featured .story_video video,
-.section_story .is-story-featured .story_video,
-.section_story .is-story-featured .story_video .story_video-el,
-.section_story .is-story-featured .story_video video,
-.section_story .story_featured-slot .story_video,
-.section_story .story_featured-slot .story_video .story_video-el,
-.section_story .story_featured-slot .story_video video {
-  transform: scale(1);
-  transition: transform 0.55s ease;
-  will-change: transform;
-}
-
-.section_story .story_item.featured:hover .story_video,
-.section_story .story_item.featured:hover .story_video .story_video-el,
-.section_story .story_item.featured:hover .story_video video,
-.section_story .is-story-featured:hover .story_video,
-.section_story .is-story-featured:hover .story_video .story_video-el,
-.section_story .is-story-featured:hover .story_video video,
-.section_story .is-story-featured:focus-visible .story_video,
-.section_story .is-story-featured:focus-visible .story_video .story_video-el,
-.section_story .is-story-featured:focus-visible .story_video video,
-.section_story .story_featured-slot:hover .story_video,
-.section_story .story_featured-slot:hover .story_video .story_video-el,
-.section_story .story_featured-slot:hover .story_video video {
-  transform: scale(1.08);
-}
-
-/* Hidden prop-bound field used by script.js for MP4 src */
-.section_story .story_video-url {
-  position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  padding: 0 !important;
-  margin: -1px !important;
-  overflow: hidden !important;
-  clip: rect(0, 0, 0, 0) !important;
-  white-space: nowrap !important;
-  border: 0 !important;
-}
-
-@media screen and (max-width: 991px) {
-  /*
-    Webflow tablet has story_content { min-width: 80vw } which forces each
-    card ~full viewport wide → 7 rows even when story_grid is 7 columns.
-    Do not change column counts here; only allow items to fit the tracks.
-  */
-  .section_story .story_item,
+@media screen and (min-width: 992px) {
   .section_story .story_content {
-    min-width: 0 !important;
+    overflow: hidden;
   }
 
-  /* Mobile: always-on 75% overlay (no hover) — not a grid rule */
   .section_story .story_gray-overlay {
-    background-color: rgba(0, 0, 0, 0.75);
+    transition: background-color 0.35s ease;
+    pointer-events: none;
   }
 
   .section_story .story_tag {
-    color: #fff;
-    opacity: 1;
+    transition: color 0.35s ease, opacity 0.35s ease;
   }
 
   .section_story .story_logo,
   .section_story .story_logo-black {
+    position: absolute;
+    z-index: 3;
+    transition: filter 0.35s ease, opacity 0.35s ease;
+    filter: none;
+  }
+
+  .section_story .story_logo-white {
+    display: none !important;
+  }
+
+  .section_story .story_item:hover .story_gray-overlay,
+  .section_story .story_item:focus-visible .story_gray-overlay {
+    background-color: rgba(0, 0, 0, 0.75);
+  }
+
+  .section_story .story_item:hover .story_tag,
+  .section_story .story_item:focus-visible .story_tag {
+    color: #fff;
+    opacity: 1;
+  }
+
+  .section_story .story_item:hover .story_logo,
+  .section_story .story_item:hover .story_logo-black,
+  .section_story .story_item:focus-visible .story_logo,
+  .section_story .story_item:focus-visible .story_logo-black {
     filter: brightness(0) invert(1);
+  }
+
+  .section_story .story_item.featured:hover .story_heading.featured,
+  .section_story .story_item.featured:focus-visible .story_heading.featured {
+    color: #fff;
+  }
+
+  .section_story .story_video {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .section_story .story_video .story_video-el,
+  .section_story .story_video video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .section_story .story_grid > .is-story-featured,
+  .section_story .story_featured-slot {
+    grid-column: 1 / 2;
+    align-self: stretch;
+    height: 100%;
+    min-height: 0;
+    width: 100%;
+  }
+
+  .section_story .story_grid > .is-story-featured .story_item,
+  .section_story .story_featured-slot .story_item,
+  .section_story .story_grid > .is-story-featured {
+    height: 100%;
+    min-height: 100%;
+    width: 100%;
   }
 
   .section_story .story_item.featured .story_content,
   .section_story .is-story-featured .story_content,
   .section_story .story_featured-slot .story_content {
-    position: relative;
-    top: auto;
-    height: auto;
-    max-height: none;
+    position: sticky;
+    top: 5vh;
+    width: 100%;
+    height: 90vh;
+    max-height: 90vh;
+    aspect-ratio: auto;
+    overflow: hidden;
   }
 
-  /* Mobile: use outer heading like normal cards */
+  .section_story .story_content > .story_heading {
+    display: none;
+  }
+
   .section_story .story_item.featured .story_content > .story_heading,
   .section_story .is-story-featured .story_content > .story_heading,
   .section_story .story_featured-slot .story_content > .story_heading {
-    display: none;
+    display: block;
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 4;
+    color: #fff;
+    max-width: 90%;
   }
 
   .section_story .story_item.featured > .story_heading,
@@ -842,7 +738,43 @@
   .section_story .is-story-featured .story_item > .story_heading,
   .section_story .story_featured-slot > .story_heading,
   .section_story .story_featured-slot .story_item > .story_heading {
-    display: block;
+    display: none;
+  }
+
+  .section_story .story_item.featured .story_gray-overlay,
+  .section_story .is-story-featured .story_gray-overlay,
+  .section_story .story_featured-slot .story_gray-overlay {
+    background-color: rgba(0, 0, 0, 0.75);
+  }
+
+  .section_story .story_item.featured .story_tag,
+  .section_story .is-story-featured .story_tag,
+  .section_story .story_featured-slot .story_tag {
+    color: #fff;
+    opacity: 1;
+  }
+
+  .section_story .story_item.featured .story_logo,
+  .section_story .story_item.featured .story_logo-black,
+  .section_story .is-story-featured .story_logo,
+  .section_story .is-story-featured .story_logo-black,
+  .section_story .story_featured-slot .story_logo,
+  .section_story .story_featured-slot .story_logo-black {
+    filter: brightness(0) invert(1);
+  }
+
+  .section_story .story_item.featured .story_video,
+  .section_story .story_item.featured .story_video .story_video-el,
+  .section_story .story_item.featured .story_video video,
+  .section_story .is-story-featured .story_video,
+  .section_story .is-story-featured .story_video .story_video-el,
+  .section_story .is-story-featured .story_video video,
+  .section_story .story_featured-slot .story_video,
+  .section_story .story_featured-slot .story_video .story_video-el,
+  .section_story .story_featured-slot .story_video video {
+    transform: scale(1);
+    transition: transform 0.55s ease;
+    will-change: transform;
   }
 
   .section_story .story_item.featured:hover .story_video,
@@ -851,10 +783,25 @@
   .section_story .is-story-featured:hover .story_video,
   .section_story .is-story-featured:hover .story_video .story_video-el,
   .section_story .is-story-featured:hover .story_video video,
+  .section_story .is-story-featured:focus-visible .story_video,
+  .section_story .is-story-featured:focus-visible .story_video .story_video-el,
+  .section_story .is-story-featured:focus-visible .story_video video,
   .section_story .story_featured-slot:hover .story_video,
   .section_story .story_featured-slot:hover .story_video .story_video-el,
   .section_story .story_featured-slot:hover .story_video video {
-    transform: none;
+    transform: scale(1.08);
+  }
+
+  .section_story .story_video-url {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
   }
 }
-/* --- END: Story Featured Visuals (no grid placement) --- */
+/* --- END: Story Card — Desktop only (≥992) --- */
