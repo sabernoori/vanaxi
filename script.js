@@ -903,37 +903,107 @@
     };
   }
 
-  function closeItem(item) {
+  function clearHeightListener(answer) {
+    if (!answer) return;
+    if (answer._faqHeightHandler) {
+      answer.removeEventListener('transitionend', answer._faqHeightHandler);
+      answer._faqHeightHandler = null;
+    }
+    if (answer._faqFallbackTimer) {
+      window.clearTimeout(answer._faqFallbackTimer);
+      answer._faqFallbackTimer = null;
+    }
+  }
+
+  function setAnswerHeight(answer, px) {
+    // Override CSS height: 0 !important via setProperty priority
+    answer.style.setProperty('height', px, 'important');
+  }
+
+  function collapseAnswer(answer, immediate) {
+    if (!answer) return;
+    clearHeightListener(answer);
+
+    if (immediate) {
+      setAnswerHeight(answer, '0px');
+      answer.classList.add('is-hide');
+      return;
+    }
+
+    const start = answer.scrollHeight || answer.offsetHeight || 0;
+    setAnswerHeight(answer, start + 'px');
+    void answer.offsetHeight;
+
+    const finish = () => {
+      clearHeightListener(answer);
+      answer.classList.add('is-hide');
+      setAnswerHeight(answer, '0px');
+    };
+
+    answer._faqHeightHandler = (event) => {
+      if (event.target !== answer) return;
+      if (event.propertyName && event.propertyName !== 'height') return;
+      finish();
+    };
+    answer.addEventListener('transitionend', answer._faqHeightHandler);
+    answer._faqFallbackTimer = window.setTimeout(finish, 400);
+    setAnswerHeight(answer, '0px');
+  }
+
+  function expandAnswer(answer, immediate) {
+    if (!answer) return;
+    clearHeightListener(answer);
+
+    answer.classList.remove('is-hide');
+
+    if (immediate) {
+      setAnswerHeight(answer, 'auto');
+      return;
+    }
+
+    setAnswerHeight(answer, '0px');
+    void answer.offsetHeight;
+    const target = answer.scrollHeight;
+    setAnswerHeight(answer, Math.max(target, 1) + 'px');
+
+    const finish = () => {
+      clearHeightListener(answer);
+      // Keep pixel height (auto + !important fights); remeasure if needed
+      setAnswerHeight(answer, answer.scrollHeight + 'px');
+    };
+
+    answer._faqHeightHandler = (event) => {
+      if (event.target !== answer) return;
+      if (event.propertyName && event.propertyName !== 'height') return;
+      finish();
+    };
+    answer.addEventListener('transitionend', answer._faqHeightHandler);
+    answer._faqFallbackTimer = window.setTimeout(finish, 400);
+  }
+
+  function closeItem(item, immediate) {
     const parts = getParts(item);
     item.classList.remove('is-active');
     item.setAttribute('aria-expanded', 'false');
     if (parts.icon) parts.icon.classList.remove('is-open');
-    if (parts.answer) {
-      parts.answer.classList.add('is-hide');
-      parts.answer.style.removeProperty('height');
-      parts.answer.style.removeProperty('max-height');
-    }
+    collapseAnswer(parts.answer, immediate);
   }
 
-  function openItem(item, list) {
+  function openItem(item, list, immediate) {
     list.querySelectorAll('.faq_item.is-active').forEach((active) => {
-      if (active !== item) closeItem(active);
+      if (active !== item) closeItem(active, immediate);
     });
 
     const parts = getParts(item);
     item.classList.add('is-active');
     item.setAttribute('aria-expanded', 'true');
     if (parts.icon) parts.icon.classList.add('is-open');
-    if (parts.answer) {
-      parts.answer.classList.remove('is-hide');
-      parts.answer.style.removeProperty('height');
-      parts.answer.style.removeProperty('max-height');
-    }
+    expandAnswer(parts.answer, immediate);
   }
 
   function toggleItem(item, list) {
-    if (item.classList.contains('is-active')) closeItem(item);
-    else openItem(item, list);
+    if (item.classList.contains('is-active')) closeItem(item, false);
+    else openItem(item, list, false);
   }
 
   function bindItem(item, list) {
@@ -947,13 +1017,12 @@
     item.setAttribute('aria-expanded', 'false');
     if (parts.icon) parts.icon.classList.remove('is-open');
     if (parts.answer) {
+      clearHeightListener(parts.answer);
       parts.answer.classList.add('is-hide');
-      parts.answer.style.removeProperty('height');
-      parts.answer.style.removeProperty('max-height');
+      setAnswerHeight(parts.answer, '0px');
     }
 
     item.addEventListener('click', (event) => {
-      // Ignore nested interactive controls if any
       if (event.target.closest('a, button, input, textarea, select')) return;
       event.preventDefault();
       toggleItem(item, list);
@@ -969,6 +1038,12 @@
   function initFaqList(list) {
     const items = Array.from(list.querySelectorAll('.faq_item'));
     items.forEach((item) => bindItem(item, list));
+
+    // First item open by default
+    if (items[0] && !list.dataset.faqOpenedDefault) {
+      list.dataset.faqOpenedDefault = 'true';
+      openItem(items[0], list, true);
+    }
   }
 
   function init() {
@@ -1123,8 +1198,8 @@
 
       cells.forEach((cell) => {
         clearCell(cell);
-        if (!isDesktop) return;
         if (!isFeaturedCell(cell)) return;
+        // Mark on all breakpoints (mobile overlay CSS); place only on desktop
         cell.classList.add('is-story-featured');
         featuredCell = cell;
       });

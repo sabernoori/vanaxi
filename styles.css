@@ -552,27 +552,36 @@
   transform: rotate(45deg);
 }
 
-/* Class-driven open/close — beats Webflow height:0 on desktop + mobile */
+/*
+  Exact height is set by script.js (scrollHeight) so open/close
+  doesn't overshoot from a large max-height and "jump".
+*/
 .faq_answer,
 .faq_answer.is-hide {
   display: block !important;
   box-sizing: border-box;
   overflow: hidden !important;
-  height: auto !important;
-  max-height: 0 !important;
-  opacity: 0 !important;
-  margin: 0;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
+  height: 0 !important;
+  max-height: none !important;
+  opacity: 0;
+  margin: 0 !important;
+  padding: 0 !important;
   pointer-events: none;
-  transition: max-height 0.4s ease, opacity 0.28s ease;
+  transition: height 0.35s ease, opacity 0.28s ease;
 }
 
 .faq_item.is-active .faq_answer,
 .faq_item.is-active .faq_answer.is-hide {
-  max-height: 40rem !important;
-  opacity: 0.5 !important;
+  opacity: 0.5;
   pointer-events: auto;
+}
+
+/* Spacers inside a closed answer must not reserve space */
+.faq_answer.is-hide .faq-spacer-1-25rem,
+.faq_answer.is-hide [class*="faq-spacer"] {
+  min-height: 0 !important;
+  height: 0 !important;
+  overflow: hidden;
 }
 /* --- END: FAQ Accordion --- */
 
@@ -805,3 +814,49 @@
   }
 }
 /* --- END: Story Card — Desktop only (≥992) --- */
+
+/* --- START: Story mobile (≤991) --- */
+@media screen and (max-width: 991px) {
+  /* Single row, no wrap — scroll horizontally if needed */
+  .section_story .story_grid {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(70vw, 1fr);
+    grid-template-columns: none;
+    grid-template-rows: auto;
+    align-items: start;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .section_story .story_grid > * {
+    min-width: 0;
+  }
+
+  .section_story .story_item.featured .story_gray-overlay,
+  .section_story .is-story-featured .story_gray-overlay,
+  .section_story .story_featured-slot .story_gray-overlay,
+  .section_story [class*="d6f6e90e"] .story_gray-overlay {
+    background-color: rgba(0, 0, 0, 0.75);
+  }
+
+  .section_story .story_item.featured .story_tag,
+  .section_story .is-story-featured .story_tag,
+  .section_story .story_featured-slot .story_tag,
+  .section_story [class*="d6f6e90e"] .story_tag {
+    color: #fff;
+    opacity: 1;
+  }
+
+  .section_story .story_item.featured .story_logo,
+  .section_story .story_item.featured .story_logo-black,
+  .section_story .is-story-featured .story_logo,
+  .section_story .is-story-featured .story_logo-black,
+  .section_story .story_featured-slot .story_logo,
+  .section_story .story_featured-slot .story_logo-black,
+  .section_story [class*="d6f6e90e"] .story_logo,
+  .section_story [class*="d6f6e90e"] .story_logo-black {
+    filter: brightness(0) invert(1);
+  }
+}
+/* --- END: Story mobile (≤991) --- */
