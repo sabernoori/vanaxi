@@ -1233,3 +1233,144 @@
 // ==========================================
 // END: Story Featured Desktop Pin
 // ==========================================
+
+// ==========================================
+// START: SEO Show More / Less
+// ==========================================
+(function() {
+  'use strict';
+
+  const LABEL_MORE = 'مشاهده بیشتر';
+  const LABEL_LESS = 'مشاهده کمتر';
+  const COLLAPSED_HEIGHT = '5rem';
+
+  function getLabelEl(link) {
+    // Label is the non-icon child of .seo_link (div wrapping the string)
+    const icon = link.querySelector('.icon-24');
+    if (icon && icon.nextElementSibling) return icon.nextElementSibling;
+    return Array.from(link.children).find((el) => !el.classList.contains('icon-24')) || null;
+  }
+
+  function setLabel(link, text) {
+    const labelEl = getLabelEl(link);
+    if (!labelEl) return;
+    labelEl.textContent = text;
+  }
+
+  function clearHeightListener(el) {
+    if (!el) return;
+    if (el._seoHeightHandler) {
+      el.removeEventListener('transitionend', el._seoHeightHandler);
+      el._seoHeightHandler = null;
+    }
+    if (el._seoFallbackTimer) {
+      window.clearTimeout(el._seoFallbackTimer);
+      el._seoFallbackTimer = null;
+    }
+  }
+
+  function expandText(textEl) {
+    clearHeightListener(textEl);
+    textEl.style.height = textEl.offsetHeight + 'px';
+    void textEl.offsetHeight;
+    textEl.style.height = textEl.scrollHeight + 'px';
+
+    const finish = () => {
+      clearHeightListener(textEl);
+      textEl.style.height = 'auto';
+    };
+
+    textEl._seoHeightHandler = (event) => {
+      if (event.target !== textEl) return;
+      if (event.propertyName && event.propertyName !== 'height') return;
+      finish();
+    };
+    textEl.addEventListener('transitionend', textEl._seoHeightHandler);
+    textEl._seoFallbackTimer = window.setTimeout(finish, 500);
+  }
+
+  function collapseText(textEl) {
+    clearHeightListener(textEl);
+    textEl.style.height = textEl.scrollHeight + 'px';
+    void textEl.offsetHeight;
+    textEl.style.height = COLLAPSED_HEIGHT;
+
+    const finish = () => {
+      clearHeightListener(textEl);
+      textEl.style.height = COLLAPSED_HEIGHT;
+    };
+
+    textEl._seoHeightHandler = (event) => {
+      if (event.target !== textEl) return;
+      if (event.propertyName && event.propertyName !== 'height') return;
+      finish();
+    };
+    textEl.addEventListener('transitionend', textEl._seoHeightHandler);
+    textEl._seoFallbackTimer = window.setTimeout(finish, 500);
+  }
+
+  function toggleSeo(wrapper) {
+    const textEl = wrapper.querySelector('.seo_text');
+    const link = wrapper.querySelector('.seo_link');
+    if (!textEl || !link) return;
+
+    const isOpen = wrapper.classList.contains('is-seo-open');
+
+    if (isOpen) {
+      wrapper.classList.remove('is-seo-open');
+      setLabel(link, LABEL_MORE);
+      link.setAttribute('aria-expanded', 'false');
+      collapseText(textEl);
+    } else {
+      wrapper.classList.add('is-seo-open');
+      setLabel(link, LABEL_LESS);
+      link.setAttribute('aria-expanded', 'true');
+      expandText(textEl);
+    }
+  }
+
+  function initSeoBlock(wrapper) {
+    if (wrapper.dataset.seoBound === 'true') return;
+    wrapper.dataset.seoBound = 'true';
+
+    const link = wrapper.querySelector('.seo_link');
+    const textEl = wrapper.querySelector('.seo_text');
+    if (!link || !textEl) return;
+
+    link.setAttribute('role', 'button');
+    link.setAttribute('tabindex', '0');
+    link.setAttribute('aria-expanded', 'false');
+    setLabel(link, LABEL_MORE);
+
+    // Ensure collapsed height matches Webflow default
+    textEl.style.height = COLLAPSED_HEIGHT;
+
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      toggleSeo(wrapper);
+    });
+
+    link.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      toggleSeo(wrapper);
+    });
+  }
+
+  function init() {
+    document.querySelectorAll('.section_seo .seo_wrapper').forEach(initSeoBlock);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  window.SeoExpand = {
+    refresh: init
+  };
+})();
+// ==========================================
+// END: SEO Show More / Less
+// ==========================================

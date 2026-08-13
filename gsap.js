@@ -356,11 +356,103 @@
   // END: Process Steps Sticky Scroll
   // ==========================================
 
+  // ==========================================
+  // START: Why Center Content Fade In (Desktop)
+  // ==========================================
+  // Structure (desktop):
+  //   .why_in-center        → relative, overflow:hidden, clip-path:inset(0%)
+  //   .why_in-center-fixed  → position:fixed; inset:0 (full viewport, flex-centered)
+  //   .why_in-center-content→ the text block sitting in screen center
+  //
+  // The clip window (.why_in-center) scrolls over the fixed text.
+  // Fade must run while that clip is crossing the text — not while the
+  // text is still fully above the mask (where opacity changes are invisible).
+  // ==========================================
+  function initWhyCenterFadeIn() {
+    ScrollTrigger.matchMedia({
+      '(min-width: 992px)': function() {
+        const centers = gsap.utils.toArray('.section_why .why_in-center');
+        if (!centers.length) return;
+
+        const tweens = [];
+
+        centers.forEach((center) => {
+          const content = center.querySelector('.why_in-center-content');
+          if (!content) return;
+
+          // Clear any previous opacity on the full-viewport shell
+          const fixed = center.querySelector('.why_in-center-fixed');
+          if (fixed) gsap.set(fixed, { clearProps: 'opacity' });
+
+          gsap.set(content, { opacity: 0 });
+
+          const tween = gsap.fromTo(
+            content,
+            { opacity: 0 },
+            {
+              opacity: 1,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: center,
+                // Start: clip top meets content bottom.
+                // Content is viewport-centered via fixed flex, so its bottom
+                // is a stable viewport line (not tied to the moving clip).
+                start: () => {
+                  const vh = window.innerHeight;
+                  // Prefer live measure; fall back to geometric center
+                  const rect = content.getBoundingClientRect();
+                  let contentBottom;
+                  if (rect.height > 1) {
+                    contentBottom = rect.bottom;
+                  } else {
+                    contentBottom = (vh + content.offsetHeight) / 2;
+                  }
+                  return 'top ' + contentBottom + 'px';
+                },
+                // End: after 30% of why_in-center height.
+                // Floor at 30vh so the fade is perceptible (why_in-center is
+                // only ~24rem from the image column — 30% is still short).
+                end: () => {
+                  const fromCenter = center.offsetHeight * 0.35;
+                  const minVisible = window.innerHeight * 0.35;
+                  return '+=' + Math.max(fromCenter, minVisible);
+                },
+                scrub: true,
+                invalidateOnRefresh: true
+              }
+            }
+          );
+
+          tweens.push(tween);
+        });
+
+        ScrollTrigger.refresh();
+
+        return function() {
+          tweens.forEach((tween) => {
+            if (tween.scrollTrigger) tween.scrollTrigger.kill();
+            tween.kill();
+          });
+          centers.forEach((center) => {
+            const content = center.querySelector('.why_in-center-content');
+            const fixed = center.querySelector('.why_in-center-fixed');
+            if (content) gsap.set(content, { clearProps: 'opacity' });
+            if (fixed) gsap.set(fixed, { clearProps: 'opacity' });
+          });
+        };
+      }
+    });
+  }
+  // ==========================================
+  // END: Why Center Content Fade In (Desktop)
+  // ==========================================
+
   function init() {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
           initWhyImgScaleDown();
+          initWhyCenterFadeIn();
           initServicesDesktopScroll();
           initProcessStepsScroll();
         }, 100);
@@ -368,6 +460,7 @@
     } else {
       setTimeout(() => {
         initWhyImgScaleDown();
+        initWhyCenterFadeIn();
         initServicesDesktopScroll();
         initProcessStepsScroll();
       }, 100);
@@ -379,6 +472,7 @@
   window.GSAPAnimations = {
     refreshServicesDesktop: initServicesDesktopScroll,
     refreshWhyImgScale: initWhyImgScaleDown,
+    refreshWhyCenterFade: initWhyCenterFadeIn,
     refreshProcessSteps: initProcessStepsScroll,
     refresh: () => ScrollTrigger.refresh()
   };

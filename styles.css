@@ -4,6 +4,7 @@
 :root {
   --ease-in-out-quint: cubic-bezier(0.83, 0, 0.17, 1);
   --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in-out-expo: cubic-bezier(0.87, 0, 0.13, 1);
   --transition-base: 0.4s var(--ease-in-out-quint);
   --transition-fast: 0.3s var(--ease-in-out-quint);
 }
@@ -583,6 +584,19 @@
 }
 /* --- END: Why Image First-Load Scale --- */
 
+/* --- START: Why Center Content Fade In (Desktop) --- */
+@media screen and (min-width: 992px) {
+  .section_why .why_fader-up {
+    display: none !important;
+  }
+
+  .section_why .why_in-center-fixed,
+  .section_why .why_in-center-content {
+    will-change: opacity;
+  }
+}
+/* --- END: Why Center Content Fade In (Desktop) --- */
+
 /* --- START: Process Steps Sticky Scroll --- */
 .section_process .process_box {
   position: relative;
@@ -845,3 +859,196 @@
   }
 }
 /* --- END: Story mobile (≤991) --- */
+
+/* --- START: Footer Link Hover Background --- */
+.footer_link {
+  position: relative;
+  isolation: isolate;
+  z-index: 0;
+  transition:
+    transform 0.3s var(--ease-in-out-expo),
+    opacity 0.3s var(--ease-in-out-expo);
+}
+
+.footer_link::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-color: var(--colors--border);
+  opacity: 1;
+  transform: scaleY(0);
+  transform-origin: bottom center;
+  transition: transform 0.3s var(--ease-in-out-expo);
+  pointer-events: none;
+}
+
+.footer_link:hover,
+.footer_link:focus-visible {
+  opacity: 1;
+}
+
+.footer_link:hover::before,
+.footer_link:focus-visible::before {
+  transform: scaleY(1);
+}
+/* --- END: Footer Link Hover Background --- */
+
+/* --- START: Footer Social Item Hover Background --- */
+/*
+  Item already has a background, so the scale fill sits ABOVE that paint
+  (z-index: 0) and UNDER the icon (children z-index: 1).
+*/
+.footer_social-item {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  z-index: 0;
+  transition: opacity 0.3s var(--ease-in-out-expo);
+}
+
+.footer_social-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-color: #d9deeb;
+  opacity: 1;
+  transform: scaleY(0);
+  transform-origin: bottom center;
+  transition: transform 0.3s var(--ease-in-out-expo);
+  pointer-events: none;
+}
+
+.footer_social-item > * {
+  position: relative;
+  z-index: 1;
+}
+
+.footer_social-item:hover,
+.footer_social-item:focus-visible {
+  opacity: 1;
+}
+
+.footer_social-item:hover::before,
+.footer_social-item:focus-visible::before {
+  transform: scaleY(1);
+}
+/* --- END: Footer Social Item Hover Background --- */
+
+/* --- START: Footer Clouds Drift Loop --- */
+@keyframes footer-cloud-drift-a {
+  0%,
+  100% {
+    transform: translate(0, 0);
+    opacity: 0.85;
+  }
+  25% {
+    transform: translate(18px, -12px);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-10px, -20px);
+    opacity: 0.9;
+  }
+  75% {
+    transform: translate(-16px, -6px);
+    opacity: 0.95;
+  }
+}
+
+@keyframes footer-cloud-drift-b {
+  0%,
+  100% {
+    transform: translate(0, 0);
+    opacity: 0.8;
+  }
+  25% {
+    transform: translate(-14px, -14px);
+    opacity: 0.95;
+  }
+  50% {
+    transform: translate(12px, -8px);
+    opacity: 1;
+  }
+  75% {
+    transform: translate(20px, -16px);
+    opacity: 0.88;
+  }
+}
+
+.footer_cloud1,
+.footer_cloud2 {
+  will-change: transform, opacity;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.footer_cloud1 {
+  animation-name: footer-cloud-drift-a;
+  animation-duration: 14s;
+}
+
+.footer_cloud2 {
+  animation-name: footer-cloud-drift-b;
+  animation-duration: 18s;
+  animation-delay: -4s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer_cloud1,
+  .footer_cloud2 {
+    animation: none;
+  }
+}
+/* --- END: Footer Clouds Drift Loop --- */
+
+/* --- START: SEO Show More / Less --- */
+.seo_text {
+  overflow: hidden;
+  transition:
+    height 0.45s var(--ease-in-out-expo),
+    opacity 0.35s var(--ease-in-out-expo);
+}
+
+.seo_gradient {
+  transition: opacity 0.35s var(--ease-in-out-expo);
+  pointer-events: none;
+}
+
+.seo_link {
+  cursor: pointer;
+  transition: opacity 0.3s var(--ease-in-out-expo);
+  user-select: none;
+}
+
+.seo_link .icon-24 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.4s var(--ease-in-out-expo);
+  transform-origin: center center;
+}
+
+.seo_wrapper.is-seo-open .seo_text {
+  opacity: 1;
+}
+
+.seo_wrapper.is-seo-open .seo_gradient {
+  opacity: 0;
+}
+
+.seo_wrapper.is-seo-open .seo_link {
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  margin-top: 0.75rem;
+}
+
+.seo_wrapper.is-seo-open .seo_link .icon-24 {
+  transform: rotate(180deg);
+}
+/* --- END: SEO Show More / Less --- */
+
+
